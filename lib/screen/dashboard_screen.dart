@@ -108,7 +108,7 @@ class HomeTab extends StatelessWidget {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text(
-                      "Close",
+                      "Add To Cart",
                       style: TextStyle(fontSize: 16),
                     ),
                   )

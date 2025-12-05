@@ -28,7 +28,15 @@ class SignupScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 30),
-
+            TextField(
+              controller: mobileController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: "Full Name",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
             // Mobile Number
             TextField(
               controller: mobileController,

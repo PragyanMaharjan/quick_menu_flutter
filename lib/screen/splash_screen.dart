@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart'; // Make sure this path is correct
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,7 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Navigate after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return; // Prevent navigation error
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -25,16 +25,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.red,
       body: Center(
-        child: Text(
-          'This is my Splash Screen',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+        child: Image.asset(
+          "assets/image/jhasha_logo.jpg", // <-- your logo here
+          width: 150,  // adjust size if needed
+          height: 150,
         ),
       ),
     );
