@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:quick_menu_flutter/screen/buttom_screen/order_screen.dart';
-import 'package:quick_menu_flutter/screen/buttom_screen/profile_screen.dart';
-
+import 'order_screen.dart';
+import 'profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -85,7 +84,7 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Includes 2 pizzas, 1 large fries, 4 drinks and a dessert. Perfect for sharing with your loved ones.",
       price: "Rs. 899",
-      imagePath: "assets/image/background.jpg",
+      imagePath: "assets/image/item1.jpg",
     ),
     FoodItem(
       title: "Chicken Chilli",
@@ -94,7 +93,7 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Juicy crispy chicken coated with spicy chilli sauce, onions and capsicum. Best with fried rice.",
       price: "Rs. 420",
-      imagePath: "assets/image/background.jpg",
+      imagePath: "assets/image/item2.jpg",
     ),
     FoodItem(
       title: "BBQ Wings",
@@ -103,7 +102,7 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Smoky BBQ chicken wings served hot with mayo dip and fresh salad. Great for starters.",
       price: "Rs. 499",
-      imagePath: "assets/image/background.jpg",
+      imagePath: "assets/image/item3.jpg",
     ),
     FoodItem(
       title: "Veg Momo",
@@ -112,7 +111,7 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Steamed veg momo packed with fresh veggies and served with homemade spicy achar.",
       price: "Rs. 180",
-      imagePath: "assets/image/background.jpg",
+      imagePath: "assets/image/item4.jpg",
     ),
     FoodItem(
       title: "Cold Coffee",
@@ -121,7 +120,7 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Refreshing cold coffee blended with milk and ice, topped with cream for extra taste.",
       price: "Rs. 220",
-      imagePath: "assets/image/background.jpg",
+      imagePath: "assets/image/item5.jpg",
     ),
     FoodItem(
       title: "Paneer Tikka",
@@ -130,7 +129,7 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Grilled paneer cubes with veggies and spices served with mint chutney. Perfect starter.",
       price: "Rs. 350",
-      imagePath: "assets/image/background.jpg",
+      imagePath: "assets/image/item6.jpg",
     ),
   ];
 
