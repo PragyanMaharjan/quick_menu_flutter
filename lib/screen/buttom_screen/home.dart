@@ -104,7 +104,7 @@ class HomeTab extends StatelessWidget {
                 item.title,
                 style: const TextStyle(
                   fontFamily: 'OpenSans',
-                  fontWeight: FontWeight.w700, // Bold
+                  fontWeight: FontWeight.w700,
                   fontSize: 20,
                 ),
               ),
@@ -123,7 +123,7 @@ class HomeTab extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'OpenSans',
-                  fontWeight: FontWeight.w400, // Regular
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
@@ -138,9 +138,9 @@ class HomeTab extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // HEADER
+          // ✅ FULL-WIDTH HEADER (edge-to-edge)
           Container(
-            padding: const EdgeInsets.all(24),
+            width: double.infinity, // 👈 makes it full width
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFFE05757), Color(0xFFF7971E)],
@@ -150,29 +150,32 @@ class HomeTab extends StatelessWidget {
                 bottomRight: Radius.circular(24),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  "Jhasha effortless QR scanner",
-                  style: TextStyle(
-                    fontFamily: 'OpenSans',
-                    fontWeight: FontWeight.w700, // Bold
-                    fontSize: 24,
-                    color: Colors.white,
+            child: const Padding(
+              padding: EdgeInsets.all(24), // padding is INSIDE the header now
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Jhasha effortless QR scanner",
+                    style: TextStyle(
+                      fontFamily: 'OpenSans',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 24,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  "Scan, order, and enjoy delicious food in seconds.",
-                  style: TextStyle(
-                    fontFamily: 'OpenSans',
-                    fontWeight: FontWeight.w400, // Regular
-                    fontSize: 14,
-                    color: Colors.white70,
+                  SizedBox(height: 6),
+                  Text(
+                    "Scan, order, and enjoy delicious food in seconds.",
+                    style: TextStyle(
+                      fontFamily: 'OpenSans',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -182,7 +185,7 @@ class HomeTab extends StatelessWidget {
             "THIS IS MY DASHBOARD",
             style: TextStyle(
               fontFamily: 'OpenSans',
-              fontWeight: FontWeight.w700, // Bold
+              fontWeight: FontWeight.w700,
               fontSize: 22,
             ),
           ),
@@ -233,7 +236,7 @@ Widget menuCard(FoodItem item) {
                 item.title,
                 style: const TextStyle(
                   fontFamily: 'OpenSans',
-                  fontWeight: FontWeight.w700, // Bold title
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
                   fontSize: 18,
                 ),
