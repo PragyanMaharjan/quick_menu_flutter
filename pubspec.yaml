@@ -74,12 +74,18 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-     - family: OpenSans Bold
-       fonts:
-         - asset: assets/fonts/OpenSans-Bold.ttf
-     - family: OpenSans Regular
-       fonts:
-         - asset: assets/fonts/OpenSans-Regular.ttf
+    - family: OpenSans
+      fonts:
+        - asset: assets/fonts/OpenSans-Regular.ttf
+        - asset: assets/fonts/OpenSans-SemiBold.ttf
+        - asset: assets/fonts/OpenSans-Bold.ttf
+
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter_28pt-Regular.ttf
+        - asset: assets/fonts/Inter_28pt-Medium.ttf
+        - asset: assets/fonts/Inter_28pt-SemiBold.ttf
+        - asset: assets/fonts/Inter_28pt-Bold.ttf
 
   #
   # For details regarding fonts from package dependencies,

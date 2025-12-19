@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quick_menu_flutter/screen/buttom_screen/home.dart';
 import 'package:quick_menu_flutter/screen/buttom_screen/order_screen.dart';
 import 'package:quick_menu_flutter/screen/buttom_screen/profile_screen.dart';
 
@@ -13,7 +14,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
@@ -25,9 +28,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: IndexedStack(
           index: _selectedIndex,
           children: const [
-            DashboardScreen(),     // from buttom_screen/home.dart
-            OrderScreen(),    // from buttom_screen/order_screen.dart
-            ProfileScreen(),  // from buttom_screen/profile_screen.dart
+            HomeTab(),      // ✅ Your old Home page
+            OrderScreen(),  // ✅ Cart / Order page
+            ProfileScreen() // ✅ Profile page
           ],
         ),
       ),
@@ -38,10 +41,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         selectedItemColor: const Color(0xFFE05757),
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: "Order"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: "Order",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: "Profile",
+          ),
         ],
       ),
     );

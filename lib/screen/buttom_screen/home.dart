@@ -140,7 +140,7 @@ class HomeTab extends StatelessWidget {
         children: [
           // ✅ FULL-WIDTH HEADER (edge-to-edge)
           Container(
-            width: double.infinity, // 👈 makes it full width
+            width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFFE05757), Color(0xFFF7971E)],
@@ -151,7 +151,7 @@ class HomeTab extends StatelessWidget {
               ),
             ),
             child: const Padding(
-              padding: EdgeInsets.all(24), // padding is INSIDE the header now
+              padding: EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -160,7 +160,7 @@ class HomeTab extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'OpenSans',
                       fontWeight: FontWeight.w700,
-                      fontSize: 24,
+                      fontSize: 26,
                       color: Colors.white,
                     ),
                   ),
@@ -182,7 +182,7 @@ class HomeTab extends StatelessWidget {
           const SizedBox(height: 20),
 
           const Text(
-            "THIS IS MY DASHBOARD",
+            "Calories don’t count when you’re happy",
             style: TextStyle(
               fontFamily: 'OpenSans',
               fontWeight: FontWeight.w700,
@@ -190,8 +190,27 @@ class HomeTab extends StatelessWidget {
             ),
           ),
 
+          const SizedBox(height: 14),
+
+          // ✅ HORIZONTAL CATEGORY BUTTONS
+          SizedBox(
+            height: 42,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: const [
+                CategoryChip(text: "Starter"),
+                CategoryChip(text: "Main Course"),
+                CategoryChip(text: "Drinks"),
+                CategoryChip(text: "Popular"),
+                CategoryChip(text: "Combo"),
+              ],
+            ),
+          ),
+
           const SizedBox(height: 16),
 
+          // ✅ MENU LIST
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -209,6 +228,44 @@ class HomeTab extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+///////////////////////////////////////////////////////////
+// CATEGORY CHIP WIDGET
+///////////////////////////////////////////////////////////
+class CategoryChip extends StatelessWidget {
+  final String text;
+  const CategoryChip({super.key, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontFamily: 'OpenSans',
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: Colors.black87,
+          ),
+        ),
       ),
     );
   }

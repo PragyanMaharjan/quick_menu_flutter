@@ -1,88 +1,134 @@
 import 'package:flutter/material.dart';
+import '../login_screen.dart';
+
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        // HEADER (same as dashboard/order)
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFFE05757),
-                Color(0xFFF7971E),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(24),
-              bottomRight: Radius.circular(24),
-            ),
-          ),
-          child: const Center(
-            child: Text(
-              "Profile",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+        Column(
+          children: [
+            // HEADER
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFE05757),
+                    Color(0xFFF7971E),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Title
+                  const Center(
+                    child: Text(
+                      "Profile",
+                      style: TextStyle(
+                        fontFamily: 'OpenSans',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600, // ✅ SemiBold
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+
+                  // Settings Icon
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.settings, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+
+            const SizedBox(height: 30),
+
+            // PROFILE CONTENT
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  // Photo
+                  CircleAvatar(
+                    radius: 55,
+                    backgroundColor: Colors.white,
+                    child: CircleAvatar(
+                      radius: 52,
+                      backgroundImage: const AssetImage(
+                        "assets/image/background.jpg",
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Name
+                  const Text(
+                    "Pragyan Maharjan",
+                    style: TextStyle(
+                      fontFamily: 'OpenSans',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600, // ✅ SemiBold
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Info cards
+                  infoTile(
+                    icon: Icons.phone,
+                    label: "Phone",
+                    value: "+977 98XXXXXXXX",
+                  ),
+                  const SizedBox(height: 12),
+                  infoTile(
+                    icon: Icons.email,
+                    label: "Email",
+                    value: "yourmail@gmail.com",
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
 
-        const SizedBox(height: 30),
-
-        // PROFILE CONTENT
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            children: [
-              // Photo
-              CircleAvatar(
-                radius: 55,
-                backgroundColor: Colors.white,
-                child: CircleAvatar(
-                  radius: 52,
-                  backgroundImage: const AssetImage(
-                    "assets/image/background.jpg",
-                  ),
-                  onBackgroundImageError: (_, __) {},
-                ),
+        // LOGOUT BUTTON
+        Positioned(
+          bottom: 24,
+          right: 24,
+          child: FloatingActionButton.extended(
+            backgroundColor: const Color(0xFFE05757),
+            icon: const Icon(Icons.logout),
+            label: const Text(
+              "Logout",
+              style: TextStyle(
+                fontFamily: 'OpenSans',
+                fontWeight: FontWeight.w600, // ✅ SemiBold
               ),
-
-              const SizedBox(height: 16),
-
-              // Name
-              const Text(
-                "Pragyan Maharjan",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Info cards
-              infoTile(
-                icon: Icons.phone,
-                label: "Phone",
-                value: "+977 98XXXXXXXX",
-              ),
-              const SizedBox(height: 12),
-              infoTile(
-                icon: Icons.email,
-                label: "Email",
-                value: "yourmail@gmail.com",
-              ),
-            ],
+            ),
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+              );
+            },
           ),
         ),
       ],
@@ -91,7 +137,7 @@ class ProfileScreen extends StatelessWidget {
 }
 
 ///////////////////////////////////////////////////////////
-// SMALL INFO TILE WIDGET
+// INFO TILE
 ///////////////////////////////////////////////////////////
 Widget infoTile({
   required IconData icon,
@@ -129,7 +175,9 @@ Widget infoTile({
               Text(
                 label,
                 style: const TextStyle(
+                  fontFamily: 'OpenSans',
                   fontSize: 13,
+                  fontWeight: FontWeight.w600, // ✅ SemiBold
                   color: Colors.black54,
                 ),
               ),
@@ -137,8 +185,9 @@ Widget infoTile({
               Text(
                 value,
                 style: const TextStyle(
+                  fontFamily: 'OpenSans',
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w600, // ✅ SemiBold
                 ),
               ),
             ],
