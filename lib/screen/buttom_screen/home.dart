@@ -1,4 +1,49 @@
 import 'package:flutter/material.dart';
+import 'order_screen.dart';
+import 'profile_screen.dart';
+
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() => _selectedIndex = index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade200,
+      body: SafeArea(
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: const [
+            HomeTab(),
+            OrderScreen(),
+            ProfileScreen(),
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: const Color(0xFFE05757),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: "Order"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
+      ),
+    );
+  }
+}
 
 ///////////////////////////////////////////////////////////
 // MODEL
@@ -17,7 +62,7 @@ class FoodItem {
 }
 
 ///////////////////////////////////////////////////////////
-// HOME TAB (USE THIS INSIDE YOUR MAIN DASHBOARD NAV)
+// HOME TAB
 ///////////////////////////////////////////////////////////
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
@@ -85,7 +130,7 @@ class HomeTab extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
-              // ✅ Italic description
+              // ✅ Italic description (use OpenSans-Italic.ttf in pubspec)
               Text(
                 item.fullDesc,
                 textAlign: TextAlign.center,
@@ -131,7 +176,7 @@ class HomeTab extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        // Later: cart logic
+                        // Later: add cart logic
                         Navigator.pop(context);
                       },
                       child: const Text(
@@ -158,7 +203,7 @@ class HomeTab extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // ✅ HEADER
+          // ✅ FULL-WIDTH HEADER
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -212,7 +257,7 @@ class HomeTab extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ✅ HORIZONTAL CATEGORY BUTTONS BG
+          // ✅ HORIZONTAL CATEGORY BUTTONS WITH BACKGROUND COLOR
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -255,7 +300,7 @@ class HomeTab extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: menuCard(
                     item: item,
-                    // ✅ popup opens when clicking DESCRIPTION (GestureDetector)
+                    // ✅ popup opens when clicking DESCRIPTION
                     onDescriptionTap: () => _showDishDetails(context, item),
                   ),
                 ),
@@ -270,7 +315,7 @@ class HomeTab extends StatelessWidget {
 }
 
 ///////////////////////////////////////////////////////////
-// CATEGORY CHIP
+// CATEGORY CHIP WIDGET
 ///////////////////////////////////////////////////////////
 class CategoryChip extends StatelessWidget {
   final String text;
@@ -302,7 +347,7 @@ class CategoryChip extends StatelessWidget {
 }
 
 ///////////////////////////////////////////////////////////
-// MENU CARD (GestureDetector only on description)
+// MENU CARD (GestureDetector on DESCRIPTION only)
 ///////////////////////////////////////////////////////////
 Widget menuCard({
   required FoodItem item,
@@ -341,6 +386,7 @@ Widget menuCard({
               ),
               const SizedBox(height: 6),
 
+              // ✅ Tap ONLY the description to open popup
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onDescriptionTap,
