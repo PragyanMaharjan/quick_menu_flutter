@@ -91,14 +91,24 @@ class HomeTab extends StatelessWidget {
   void _showDishDetails(BuildContext context, FoodItem item) {
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (_) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.all(20),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(item.imagePath, height: 140),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  item.imagePath,
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
               const SizedBox(height: 12),
               Text(
                 item.title,
@@ -115,16 +125,71 @@ class HomeTab extends StatelessWidget {
                   fontFamily: 'OpenSans',
                   fontWeight: FontWeight.w600,
                   color: Colors.redAccent,
+                  fontSize: 15,
                 ),
               ),
               const SizedBox(height: 10),
+
+              // ✅ Italic description (use OpenSans-Italic.ttf in pubspec)
               Text(
                 item.fullDesc,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'OpenSans',
                   fontWeight: FontWeight.w400,
+                  fontStyle: FontStyle.italic,
+                  fontSize: 14,
+                  color: Colors.black87,
                 ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ✅ Cancel + Add To Cart
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: const BorderSide(color: Colors.black26),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE05757),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        // Later: add cart logic
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        "Add To Cart",
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -138,7 +203,7 @@ class HomeTab extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // ✅ FULL-WIDTH HEADER (edge-to-edge)
+          // ✅ FULL-WIDTH HEADER
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -192,19 +257,34 @@ class HomeTab extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ✅ HORIZONTAL CATEGORY BUTTONS
-          SizedBox(
-            height: 42,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: const [
-                CategoryChip(text: "Starter"),
-                CategoryChip(text: "Main Course"),
-                CategoryChip(text: "Drinks"),
-                CategoryChip(text: "Popular"),
-                CategoryChip(text: "Combo"),
+          // ✅ HORIZONTAL CATEGORY BUTTONS WITH BACKGROUND COLOR
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E6),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 6,
+                  offset: Offset(0, 3),
+                ),
               ],
+            ),
+            child: SizedBox(
+              height: 42,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: const [
+                  CategoryChip(text: "Starter"),
+                  CategoryChip(text: "Main Course"),
+                  CategoryChip(text: "Drinks"),
+                  CategoryChip(text: "Popular"),
+                  CategoryChip(text: "Combo"),
+                ],
+              ),
             ),
           ),
 
@@ -218,9 +298,10 @@ class HomeTab extends StatelessWidget {
                   .map(
                     (item) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: GestureDetector(
-                    onTap: () => _showDishDetails(context, item),
-                    child: menuCard(item),
+                  child: menuCard(
+                    item: item,
+                    // ✅ popup opens when clicking DESCRIPTION
+                    onDescriptionTap: () => _showDishDetails(context, item),
                   ),
                 ),
               )
@@ -248,13 +329,7 @@ class CategoryChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: Colors.black12),
       ),
       child: Center(
         child: Text(
@@ -272,9 +347,12 @@ class CategoryChip extends StatelessWidget {
 }
 
 ///////////////////////////////////////////////////////////
-// MENU CARD
+// MENU CARD (GestureDetector on DESCRIPTION only)
 ///////////////////////////////////////////////////////////
-Widget menuCard(FoodItem item) {
+Widget menuCard({
+  required FoodItem item,
+  required VoidCallback onDescriptionTap,
+}) {
   return Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
@@ -307,17 +385,26 @@ Widget menuCard(FoodItem item) {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(
-                item.shortDesc,
-                style: const TextStyle(
-                  fontFamily: 'OpenSans',
-                  fontWeight: FontWeight.w400,
-                  color: Colors.white,
+
+              // ✅ Tap ONLY the description to open popup
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onDescriptionTap,
+                child: Text(
+                  item.shortDesc,
+                  style: const TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontWeight: FontWeight.w400,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
             ],
           ),
         ),
+        const SizedBox(width: 10),
         Image.asset(item.imagePath, height: 60),
       ],
     ),
