@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:quick_menu_flutter/screen/buttom_screen/home.dart';
-import 'package:quick_menu_flutter/screen/buttom_screen/order_screen.dart';
-import 'package:quick_menu_flutter/screen/buttom_screen/profile_screen.dart';
+import 'package:quick_menu_flutter/features/dashboard/presentation/pages/home.dart';
+import 'package:quick_menu_flutter/features/dashboard/presentation/pages/order_screen.dart';
+import 'package:quick_menu_flutter/features/dashboard/presentation/pages/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
