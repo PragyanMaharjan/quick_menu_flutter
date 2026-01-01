@@ -59,7 +59,7 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Includes 2 pizzas, 1 large fries, 4 drinks and a dessert. Perfect for sharing.",
       price: "Rs. 899",
-      imagePath: "assets/image/background.jpg",
+      imagePath: "assets/image/family_combo.jpg",
     ),
     FoodItem(
       title: "Chicken Chilli",
@@ -68,7 +68,7 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Juicy crispy chicken coated with spicy chilli sauce and capsicum.",
       price: "Rs. 420",
-      imagePath: "assets/image/background.jpg",
+      imagePath: "assets/image/chickenchilli.jpg",
     ),
   ];
 
