@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quick_menu_flutter/features/auth/presentation/pages/sigup_screen.dart';
 
-import '../../../../screen/dashboard_screen.dart';
+import '../../../dashboard/presentation/pages/dashboard_screen.dart';
 
 
 
