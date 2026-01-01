@@ -34,6 +34,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+///////////////////////////////////////////////////////////
+// MODEL
+///////////////////////////////////////////////////////////
 class FoodItem {
   final String title, subtitle, shortDesc, fullDesc, price, imagePath;
 
@@ -47,7 +50,9 @@ class FoodItem {
   });
 }
 
-
+///////////////////////////////////////////////////////////
+// HOME TAB
+///////////////////////////////////////////////////////////
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
 
@@ -59,16 +64,15 @@ class HomeTab extends StatelessWidget {
       fullDesc:
       "Includes 2 pizzas, 1 large fries, 4 drinks and a dessert. Perfect for sharing.",
       price: "Rs. 899",
-      imagePath: "assets/image/family_combo.jpg",
+      imagePath: "assets/image/family_combo.jpeg",
     ),
     FoodItem(
       title: "Chicken Chilli",
       subtitle: "Spicy & Crispy",
       shortDesc: "Crispy chicken tossed in chilli sauce.",
-      fullDesc:
-      "Juicy crispy chicken coated with spicy chilli sauce and capsicum.",
+      fullDesc: "Juicy crispy chicken coated with spicy chilli sauce and capsicum.",
       price: "Rs. 420",
-      imagePath: "assets/image/chickenchilli.jpg",
+      imagePath: "assets/image/chickenchilli.jpeg",
     ),
   ];
 
@@ -84,18 +88,32 @@ class HomeTab extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  item.imagePath,
-                  height: 160,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+              // - Improved image in popup (rounded + shadow)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(
+                    item.imagePath,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
+
               const SizedBox(height: 12),
 
-              // ✅ Title Bold
+              // - Title Bold
               Text(
                 item.title,
                 style: const TextStyle(
@@ -106,7 +124,7 @@ class HomeTab extends StatelessWidget {
               ),
               const SizedBox(height: 6),
 
-              // ✅ Price SemiBold
+              // - Price SemiBold
               Text(
                 "Price: ${item.price}",
                 style: const TextStyle(
@@ -118,7 +136,7 @@ class HomeTab extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
-              // ✅ Description Italic
+              // - Description Italic
               Text(
                 item.fullDesc,
                 textAlign: TextAlign.center,
@@ -133,7 +151,7 @@ class HomeTab extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ✅ Cancel + Add To Cart
+              // - Cancel + Add To Cart
               Row(
                 children: [
                   Expanded(
@@ -167,7 +185,6 @@ class HomeTab extends StatelessWidget {
                         // TODO: Add cart logic here
                         Navigator.pop(context);
 
-                        // ✅ Optional small popup msg after adding
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
@@ -204,7 +221,7 @@ class HomeTab extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // ✅ FULL-WIDTH HEADER
+          // - FULL-WIDTH HEADER
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -258,7 +275,7 @@ class HomeTab extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ✅ HORIZONTAL CATEGORY BUTTONS
+          // - HORIZONTAL CATEGORY BUTTONS
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -291,7 +308,7 @@ class HomeTab extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ✅ MENU LIST (tap card or description opens popup)
+          // - MENU LIST
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -348,7 +365,7 @@ class CategoryChip extends StatelessWidget {
 }
 
 ///////////////////////////////////////////////////////////
-// MENU CARD
+// MENU CARD (- UPDATED IMAGE LOOKS CLEAN)
 ///////////////////////////////////////////////////////////
 Widget menuCard({
   required FoodItem item,
@@ -357,7 +374,7 @@ Widget menuCard({
 }) {
   return InkWell(
     borderRadius: BorderRadius.circular(20),
-    onTap: onTap, // ✅ tap anywhere on card opens popup
+    onTap: onTap,
     child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -391,7 +408,7 @@ Widget menuCard({
                 ),
                 const SizedBox(height: 6),
 
-                // ✅ Tap ONLY description also opens popup
+                // - Tap ONLY description also opens popup
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: onDescriptionTap,
@@ -410,7 +427,20 @@ Widget menuCard({
             ),
           ),
           const SizedBox(width: 10),
-          Image.asset(item.imagePath, height: 60),
+
+          // - Updated food image: rounded + fixed size + cover
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: 70,
+              height: 70,
+              color: Colors.white.withOpacity(0.9),
+              child: Image.asset(
+                item.imagePath,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
         ],
       ),
     ),
