@@ -28,9 +28,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: IndexedStack(
           index: _selectedIndex,
           children: const [
-            HomeTab(),      // ✅ Your old Home page
-            OrderScreen(),  // ✅ Cart / Order page
-            ProfileScreen() // ✅ Profile page
+            HomeTab(),
+            OrderScreen(),
+            ProfileScreen()
           ],
         ),
       ),

@@ -7,7 +7,7 @@ class OrderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // HEADER (same style as dashboard)
+
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -39,7 +39,6 @@ class OrderScreen extends StatelessWidget {
 
         const SizedBox(height: 40),
 
-        // CENTER MESSAGE
         Expanded(
           child: Center(
             child: Column(

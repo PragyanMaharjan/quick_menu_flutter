@@ -30,15 +30,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-
-      // ✅ REMOVED BottomNavigationBar (you said you have it in another file)
     );
   }
 }
 
-///////////////////////////////////////////////////////////
-// MODEL
-///////////////////////////////////////////////////////////
 class FoodItem {
   final String title, subtitle, shortDesc, fullDesc, price, imagePath;
 
@@ -52,9 +47,7 @@ class FoodItem {
   });
 }
 
-///////////////////////////////////////////////////////////
-// HOME TAB
-///////////////////////////////////////////////////////////
+
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
 

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import 'package:quick_menu_flutter/features/auth/presentation/pages/sigup_screen.dart';
 
-class SignupScreen extends StatelessWidget {
-  const SignupScreen({super.key});
+import '../../../../screen/dashboard_screen.dart';
+
+
+
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
 
   static const Color primary = Color(0xFFE05757);
 
   @override
   Widget build(BuildContext context) {
-    final mobileController = TextEditingController();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
 
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
@@ -37,7 +39,7 @@ class SignupScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Create Account",
+                        "Welcome Back!",
                         style: TextStyle(
                           fontFamily: 'OpenSans',
                           fontWeight: FontWeight.w700,
@@ -47,7 +49,7 @@ class SignupScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 6),
                       Text(
-                        "Just a prototype — fill anything and continue.",
+                        "Login to continue your delicious journey.",
                         style: TextStyle(
                           fontFamily: 'OpenSans',
                           fontWeight: FontWeight.w400,
@@ -62,7 +64,6 @@ class SignupScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // ✅ Card
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
@@ -81,26 +82,56 @@ class SignupScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _label("Mobile Number"),
-                      _field(mobileController, "Enter mobile number", TextInputType.phone),
+                      const Text(
+                        "Email",
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: emailController,
+                        decoration: InputDecoration(
+                          hintText: "Enter your email",
+                          hintStyle: const TextStyle(
+                            fontFamily: 'OpenSans',
+                            color: Colors.black45,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
 
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
 
-                      _label("Email"),
-                      _field(emailController, "Enter email", TextInputType.emailAddress),
-
-                      const SizedBox(height: 14),
-
-                      _label("Password"),
-                      _passwordField(passwordController, "Enter password"),
-
-                      const SizedBox(height: 14),
-
-                      _label("Confirm Password"),
-                      _passwordField(confirmPasswordController, "Confirm password"),
+                      const Text(
+                        "Password",
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          hintText: "Enter your password",
+                          hintStyle: const TextStyle(
+                            fontFamily: 'OpenSans',
+                            color: Colors.black45,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
 
                       const SizedBox(height: 22),
 
+                      // ✅ Login button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -112,16 +143,15 @@ class SignupScreen extends StatelessWidget {
                             ),
                           ),
                           onPressed: () {
-                            // ✅ Prototype: go back to login
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const LoginScreen(),
+                                builder: (_) => const DashboardScreen(),
                               ),
                             );
                           },
                           child: const Text(
-                            "Sign Up",
+                            "Login",
                             style: TextStyle(
                               fontFamily: 'OpenSans',
                               fontWeight: FontWeight.w700,
@@ -134,11 +164,12 @@ class SignupScreen extends StatelessWidget {
 
                       const SizedBox(height: 14),
 
+                      // ✅ Sign up link
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            "Already have an account? ",
+                            "Don't have an account? ",
                             style: TextStyle(
                               fontFamily: 'OpenSans',
                               fontWeight: FontWeight.w400,
@@ -146,15 +177,15 @@ class SignupScreen extends StatelessWidget {
                           ),
                           GestureDetector(
                             onTap: () {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const LoginScreen(),
+                                  builder: (_) => const SignupScreen(),
                                 ),
                               );
                             },
                             child: const Text(
-                              "Login",
+                              "Sign up",
                               style: TextStyle(
                                 fontFamily: 'OpenSans',
                                 fontWeight: FontWeight.w700,
@@ -172,55 +203,6 @@ class SignupScreen extends StatelessWidget {
               const SizedBox(height: 30),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  // Helpers (keeps UI same everywhere)
-  static Widget _label(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontFamily: 'OpenSans',
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-
-  static Widget _field(
-      TextEditingController controller,
-      String hint,
-      TextInputType keyboardType,
-      ) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(
-          fontFamily: 'OpenSans',
-          color: Colors.black45,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
-
-  static Widget _passwordField(TextEditingController controller, String hint) {
-    return TextField(
-      controller: controller,
-      obscureText: true,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(
-          fontFamily: 'OpenSans',
-          color: Colors.black45,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import '../../../auth/presentation/pages/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.red,
       body: Center(
         child: Image.asset(
-          "assets/image/jhasha_logo.jpg", // <-- your logo here
+          "assets/image/jhasha_logo.jpg",
           width: 150,  // adjust size if needed
           height: 150,
         ),

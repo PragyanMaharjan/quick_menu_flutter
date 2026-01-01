@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const primary = Color(0xFFE53935); // red
-  static const bg = Color(0xFFF5F5F5);      // dashboard grey
+  static const primary = Color(0xFFE53935);
+  static const bg = Color(0xFFF5F5F5);
   static const card = Colors.white;
   static const textDark = Color(0xFF111111);
 }

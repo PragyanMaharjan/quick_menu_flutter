@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../login_screen.dart';
+import '../../features/auth/presentation/pages/login_screen.dart';
 
 
 class ProfileScreen extends StatelessWidget {
@@ -136,9 +136,6 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-///////////////////////////////////////////////////////////
-// INFO TILE
-///////////////////////////////////////////////////////////
 Widget infoTile({
   required IconData icon,
   required String label,
