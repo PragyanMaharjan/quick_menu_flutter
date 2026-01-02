@@ -1,11 +1,10 @@
 import 'package:hive/hive.dart';
-import '../../../../../core/constants/hive_table_constants.dart';
+import 'package:quick_menu/core/constants/hive_table_constants.dart';
 
-
-part "auth_hive_model.g.dart";
+part 'auth_hive_model.g.dart';
 
 @HiveType(typeId: HiveTableConstants.authTypeId)
-class AuthHiveModel extends HiveObject {
+class AuthHiveModel {
   @HiveField(0)
   final String id;
 
@@ -21,7 +20,7 @@ class AuthHiveModel extends HiveObject {
   @HiveField(4)
   final String password;
 
-  AuthHiveModel({
+  const AuthHiveModel({
     required this.id,
     required this.fullName,
     required this.email,

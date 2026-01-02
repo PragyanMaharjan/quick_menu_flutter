@@ -8,14 +8,6 @@ abstract class Failure extends Equatable {
   List<Object?> get props => [message];
 }
 
-class CacheFailure extends Failure {
-  const CacheFailure([super.message = "Cache failure"]);
-}
-
-class AuthFailure extends Failure {
-  const AuthFailure([super.message = "Auth failure"]);
-}
-
-class UnknownFailure extends Failure {
-  const UnknownFailure([super.message = "Something went wrong"]);
+class LocalFailure extends Failure {
+  const LocalFailure(super.message);
 }
