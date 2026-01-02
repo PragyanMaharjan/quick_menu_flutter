@@ -1,33 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:quick_menu/features/auth/presentation/pages/sigup_screen.dart';
-import '../../../../core/services/auth_hive_service.dart';
+import 'package:quick_menu/core/utils/snackbar_utils.dart';
+import 'package:quick_menu/core/services/auth_hive_service.dart';
 import '../../../dashboard/presentation/pages/dashboard_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   static const Color primary = Color(0xFFE05757);
+
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final authService = AuthHiveService();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-
-    final authService = AuthHiveService();
-
-    void showMsg(String msg) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // ✅ Header like Dashboard
+              // Header
               Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
@@ -100,10 +106,6 @@ class LoginScreen extends StatelessWidget {
                         controller: emailController,
                         decoration: InputDecoration(
                           hintText: "Enter your email",
-                          hintStyle: const TextStyle(
-                            fontFamily: 'OpenSans',
-                            color: Colors.black45,
-                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -125,10 +127,6 @@ class LoginScreen extends StatelessWidget {
                         obscureText: true,
                         decoration: InputDecoration(
                           hintText: "Enter your password",
-                          hintStyle: const TextStyle(
-                            fontFamily: 'OpenSans',
-                            color: Colors.black45,
-                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -137,7 +135,6 @@ class LoginScreen extends StatelessWidget {
 
                       const SizedBox(height: 22),
 
-                      // ✅ Login button (Hive)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -153,7 +150,10 @@ class LoginScreen extends StatelessWidget {
                             final password = passwordController.text;
 
                             if (email.isEmpty || password.isEmpty) {
-                              showMsg("Please fill all fields");
+                              SnackBarUtils.error(
+                                context,
+                                "Please fill up the details to continue",
+                              );
                               return;
                             }
 
@@ -162,12 +162,17 @@ class LoginScreen extends StatelessWidget {
                               password: password,
                             );
 
+                            if (!context.mounted) return; // ✅ FIX async gap
+
                             if (error != null) {
-                              showMsg(error);
+                              SnackBarUtils.error(context, error);
                               return;
                             }
 
-                            showMsg("✅ Login successful");
+                            SnackBarUtils.success(
+                              context,
+                              "Login successful",
+                            );
 
                             Navigator.pushReplacement(
                               context,
@@ -190,17 +195,10 @@ class LoginScreen extends StatelessWidget {
 
                       const SizedBox(height: 14),
 
-                      // ✅ Sign up link
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            "Don't have an account? ",
-                            style: TextStyle(
-                              fontFamily: 'OpenSans',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
+                          const Text("Don't have an account? "),
                           GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -213,7 +211,6 @@ class LoginScreen extends StatelessWidget {
                             child: const Text(
                               "Sign up",
                               style: TextStyle(
-                                fontFamily: 'OpenSans',
                                 fontWeight: FontWeight.w700,
                                 color: primary,
                               ),
