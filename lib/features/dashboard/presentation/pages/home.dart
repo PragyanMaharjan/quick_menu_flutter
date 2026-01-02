@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:quick_menu_flutter/core/utils/snackbar_utils.dart';
 import 'order_screen.dart';
 import 'profile_screen.dart';
+
+
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,10 +26,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
-          children: const [
-            HomeTab(),
-            OrderScreen(),
-            ProfileScreen(),
+          children: [
+            // ✅ Builder helps Snackbar always find the correct Scaffold
+            Builder(builder: (context) => const HomeTab()),
+            const OrderScreen(),
+            const ProfileScreen(),
           ],
         ),
       ),
@@ -88,7 +92,7 @@ class HomeTab extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // - Improved image in popup (rounded + shadow)
+              // ✅ Improved image in popup (rounded + shadow)
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
@@ -113,7 +117,7 @@ class HomeTab extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // - Title Bold
+              // ✅ Title Bold
               Text(
                 item.title,
                 style: const TextStyle(
@@ -124,7 +128,7 @@ class HomeTab extends StatelessWidget {
               ),
               const SizedBox(height: 6),
 
-              // - Price SemiBold
+              // ✅ Price SemiBold
               Text(
                 "Price: ${item.price}",
                 style: const TextStyle(
@@ -136,7 +140,7 @@ class HomeTab extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
-              // - Description Italic
+              // ✅ Description Italic
               Text(
                 item.fullDesc,
                 textAlign: TextAlign.center,
@@ -151,7 +155,7 @@ class HomeTab extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // - Cancel + Add To Cart
+              // ✅ Cancel + Add To Cart
               Row(
                 children: [
                   Expanded(
@@ -182,19 +186,13 @@ class HomeTab extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        // TODO: Add cart logic here
+                        // ✅ Close dialog
                         Navigator.pop(context);
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "${item.title} added to cart!",
-                              style: const TextStyle(
-                                fontFamily: 'OpenSans',
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                        // ✅ Clean one-line snackbar call from utils
+                        SnackBarUtils.success(
+                          context,
+                          "${item.title} added to cart!",
                         );
                       },
                       child: const Text(
@@ -221,7 +219,7 @@ class HomeTab extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // - FULL-WIDTH HEADER
+          // ✅ FULL-WIDTH HEADER
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -275,7 +273,7 @@ class HomeTab extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // - HORIZONTAL CATEGORY BUTTONS
+          // ✅ HORIZONTAL CATEGORY BUTTONS
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -308,7 +306,7 @@ class HomeTab extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // - MENU LIST
+          // ✅ MENU LIST
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -365,7 +363,7 @@ class CategoryChip extends StatelessWidget {
 }
 
 ///////////////////////////////////////////////////////////
-// MENU CARD (- UPDATED IMAGE LOOKS CLEAN)
+// MENU CARD (✅ UPDATED IMAGE LOOKS CLEAN)
 ///////////////////////////////////////////////////////////
 Widget menuCard({
   required FoodItem item,
@@ -408,7 +406,7 @@ Widget menuCard({
                 ),
                 const SizedBox(height: 6),
 
-                // - Tap ONLY description also opens popup
+                // ✅ Tap ONLY description also opens popup
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: onDescriptionTap,
@@ -428,7 +426,7 @@ Widget menuCard({
           ),
           const SizedBox(width: 10),
 
-          // - Updated food image: rounded + fixed size + cover
+          // ✅ Updated food image: rounded + fixed size + cover
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
             child: Container(
