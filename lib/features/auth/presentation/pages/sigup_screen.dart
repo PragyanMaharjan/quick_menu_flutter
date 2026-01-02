@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:quick_menu/core/services/auth_hive_service.dart';
 import 'login_screen.dart';
+
 
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
@@ -8,10 +10,19 @@ class SignupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fullNameController = TextEditingController();
     final mobileController = TextEditingController();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
+
+    final authService = AuthHiveService();
+
+    void showMsg(String msg) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
@@ -25,6 +36,8 @@ class SignupScreen extends StatelessWidget {
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFFE05757), Color(0xFFF7971E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(24),
@@ -47,7 +60,7 @@ class SignupScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 6),
                       Text(
-                        "Just a prototype — fill anything and continue.",
+                        "Sign up to continue.",
                         style: TextStyle(
                           fontFamily: 'OpenSans',
                           fontWeight: FontWeight.w400,
@@ -81,13 +94,30 @@ class SignupScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _label("Full Name"),
+                      _field(
+                        fullNameController,
+                        "Enter full name",
+                        TextInputType.name,
+                      ),
+
+                      const SizedBox(height: 14),
+
                       _label("Mobile Number"),
-                      _field(mobileController, "Enter mobile number", TextInputType.phone),
+                      _field(
+                        mobileController,
+                        "Enter mobile number",
+                        TextInputType.phone,
+                      ),
 
                       const SizedBox(height: 14),
 
                       _label("Email"),
-                      _field(emailController, "Enter email", TextInputType.emailAddress),
+                      _field(
+                        emailController,
+                        "Enter email",
+                        TextInputType.emailAddress,
+                      ),
 
                       const SizedBox(height: 14),
 
@@ -97,10 +127,14 @@ class SignupScreen extends StatelessWidget {
                       const SizedBox(height: 14),
 
                       _label("Confirm Password"),
-                      _passwordField(confirmPasswordController, "Confirm password"),
+                      _passwordField(
+                        confirmPasswordController,
+                        "Confirm password",
+                      ),
 
                       const SizedBox(height: 22),
 
+                      // ✅ Sign Up Button (Hive)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -111,8 +145,43 @@ class SignupScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          onPressed: () {
-                            // ✅ Prototype: go back to login
+                          onPressed: () async {
+                            final fullName = fullNameController.text.trim();
+                            final mobile = mobileController.text.trim();
+                            final email = emailController.text.trim();
+                            final password = passwordController.text;
+                            final confirmPassword =
+                                confirmPasswordController.text;
+
+                            if (fullName.isEmpty ||
+                                mobile.isEmpty ||
+                                email.isEmpty ||
+                                password.isEmpty ||
+                                confirmPassword.isEmpty) {
+                              showMsg("Please fill all fields");
+                              return;
+                            }
+
+                            if (password != confirmPassword) {
+                              showMsg("Passwords do not match");
+                              return;
+                            }
+
+                            final error = await authService.signup(
+                              fullName: fullName,
+                              email: email,
+                              phoneNumber: mobile,
+                              password: password,
+                            );
+
+                            if (error != null) {
+                              showMsg(error);
+                              return;
+                            }
+
+                            showMsg("✅ Account created successfully");
+
+                            // go to login (or dashboard if you want)
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -134,6 +203,7 @@ class SignupScreen extends StatelessWidget {
 
                       const SizedBox(height: 14),
 
+                      // ✅ Already have account
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

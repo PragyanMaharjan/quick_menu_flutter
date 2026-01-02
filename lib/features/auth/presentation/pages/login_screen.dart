@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:quick_menu_flutter/features/auth/presentation/pages/sigup_screen.dart';
-
+import 'package:quick_menu/features/auth/presentation/pages/sigup_screen.dart';
+import '../../../../core/services/auth_hive_service.dart';
 import '../../../dashboard/presentation/pages/dashboard_screen.dart';
-
-
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -14,6 +12,14 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+
+    final authService = AuthHiveService();
+
+    void showMsg(String msg) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
@@ -131,7 +137,7 @@ class LoginScreen extends StatelessWidget {
 
                       const SizedBox(height: 22),
 
-                      // ✅ Login button
+                      // ✅ Login button (Hive)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -142,7 +148,27 @@ class LoginScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
+                            final email = emailController.text.trim();
+                            final password = passwordController.text;
+
+                            if (email.isEmpty || password.isEmpty) {
+                              showMsg("Please fill all fields");
+                              return;
+                            }
+
+                            final error = await authService.login(
+                              email: email,
+                              password: password,
+                            );
+
+                            if (error != null) {
+                              showMsg(error);
+                              return;
+                            }
+
+                            showMsg("✅ Login successful");
+
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(

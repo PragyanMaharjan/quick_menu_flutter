@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:quick_menu_flutter/core/utils/snackbar_utils.dart';
+
+import '../../../../core/utils/snackbar_utils.dart';
 import 'order_screen.dart';
 import 'profile_screen.dart';
 
