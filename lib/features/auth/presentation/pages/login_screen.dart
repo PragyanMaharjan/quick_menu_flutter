@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quick_menu/core/widgets/mytextfield.dart';
+import 'package:quick_menu/core/widgets/mybutton.dart';
 import 'package:quick_menu/features/auth/presentation/pages/sigup_screen.dart';
-
-import '../../../../core/widgets/mybutton.dart';
 import '../../../dashboard/presentation/pages/dashboard_screen.dart';
 import '../view_model/auth_view_model.dart';
 import '../state/auth_state.dart';
@@ -57,17 +56,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
 
       final authState = ref.read(authViewModelProvider);
+
       if (authState.status == AuthStatus.authenticated) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Login successful!')));
+        ).showSnackBar(const SnackBar(content: Text("Login successful")));
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
         );
       } else if (authState.status == AuthStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authState.errorMessage ?? 'Login failed')),
+          SnackBar(content: Text(authState.errorMessage ?? "Login failed")),
         );
       }
     }
@@ -83,83 +84,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       appBar: AppBar(
         title: const Text(
           "Quick Scan",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.teal,
         elevation: 0,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 40),
 
-                const Text(
-                  "Welcome Back",
-                  style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Login to continue",
-                  style: TextStyle(color: Colors.grey),
-                ),
+              const Text(
+                "Welcome Back",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Login to continue",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
 
-                const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-                MyTextformfield(
-                  labelText: "Email",
-                  hintText: 'Enter valid Email',
-                  controller: mail,
-                  errorMessage: 'Enter a valid email',
-                  validator: validateEmail,
-                ),
+              MyTextformfield(
+                labelText: "Email",
+                hintText: "Enter your email",
+                controller: mail,
+                errorMessage: "Email is required",
+                validator: validateEmail,
+                keyboardType: TextInputType.emailAddress,
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                MyTextformfield(
-                  labelText: "Password",
-                  hintText: 'Enter valid password',
-                  controller: pass,
-                  errorMessage: 'Enter a correct password',
-                  validator: validatePassword,
-                  obscureText: true,
-                ),
+              MyTextformfield(
+                labelText: "Password",
+                hintText: "Enter your password",
+                controller: pass,
+                errorMessage: "Password is required",
+                validator: validatePassword,
+                obscureText: true,
+              ),
 
-                const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-                SizedBox(
-                  width: double.infinity,
-                  child: MyButton(
-                    onPressed: isLoading ? null : _handleLogin,
-                    text: isLoading ? "Logging in..." : "Log In",
+              MyButton(
+                onPressed: isLoading ? null : _handleLogin,
+                text: isLoading ? "Logging in..." : "Log In",
+              ),
+
+              const SizedBox(height: 30),
+
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignupScreen()),
+                  );
+                },
+                child: const Text(
+                  "Don't have an account? Sign up",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.teal,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 30),
-
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SignupScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    "Don't have an account? Sign up",
-                    style: TextStyle(
-                      color: Colors.teal,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
