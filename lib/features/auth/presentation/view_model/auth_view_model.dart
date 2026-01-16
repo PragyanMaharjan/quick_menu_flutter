@@ -1,100 +1,39 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/usecases/login_usecase.dart';
-import '../../domain/usecases/register_usecase.dart';
-import '../../domain/usecases/logout_usecase.dart';
-import '../../domain/usecases/get_current_usecase.dart';
-import '../state/auth_state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quick_menu/features/auth/domain/usecases/get_current_usecase.dart';
+import 'package:quick_menu/features/auth/domain/usecases/login_usecase.dart';
+import 'package:quick_menu/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:quick_menu/features/auth/domain/usecases/register_usecase.dart';
+import 'package:quick_menu/features/auth/presentation/state/auth_state.dart';
+
+final authViewModelProvider = NotifierProvider<AuthViewModel, AuthState>(
+  AuthViewModel.new,
+);
 
 class AuthViewModel extends Notifier<AuthState> {
-  late final LoginUseCase _loginUseCase;
-  late final RegisterUseCase _registerUseCase;
-  late final LogoutUseCase _logoutUseCase;
-  late final GetCurrentUserUseCase _getCurrentUserUseCase;
+  late final RegisterUsecase _registerUsecase;
+  late final LoginUsecase _loginUsecase;
+  late final GetCurrentUserUsecase _getCurrentUserUsecase;
+  late final LogoutUsecase _logoutUsecase;
 
   @override
   AuthState build() {
-    // 👇 these are set from provider (see provider code below)
-    throw UnimplementedError(
-      "AuthViewModel must be created using authViewModelProvider",
-    );
+    _registerUsecase = ref.read(registerUsecaseProvider);
+    _loginUsecase = ref.read(loginUsecaseProvider);
+    _getCurrentUserUsecase = ref.read(getCurrentUserUsecaseProvider);
+    _logoutUsecase = ref.read(logoutUsecaseProvider);
+    return const AuthState();
   }
 
-  // ✅ initializer called from provider
-  void init({
-    required LoginUseCase loginUseCase,
-    required RegisterUseCase registerUseCase,
-    required LogoutUseCase logoutUseCase,
-    required GetCurrentUserUseCase getCurrentUserUseCase,
-  }) {
-    _loginUseCase = loginUseCase;
-    _registerUseCase = registerUseCase;
-    _logoutUseCase = logoutUseCase;
-    _getCurrentUserUseCase = getCurrentUserUseCase;
-
-    state = const AuthState.initial();
-  }
-
-  void clearMessages() {
-    state = state.copyWith(clearError: true, clearSuccess: true);
-  }
-
-  Future<void> loadCurrentUser() async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
-
-    final result = await _getCurrentUserUseCase();
-
-    result.fold(
-          (failure) {
-        state = state.copyWith(isLoading: false, errorMessage: failure.message);
-      },
-          (user) {
-        state = state.copyWith(isLoading: false, user: user);
-      },
-    );
-  }
-
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
-
-    final result = await _loginUseCase(LoginParams(email: email, password: password));
-
-    return result.fold(
-          (failure) {
-        state = state.copyWith(isLoading: false, errorMessage: failure.message);
-        return false;
-      },
-          (_) async {
-        final current = await _getCurrentUserUseCase();
-        current.fold(
-              (_) {
-            state = state.copyWith(isLoading: false, successMessage: "Login successful");
-          },
-              (user) {
-            state = state.copyWith(
-              isLoading: false,
-              user: user,
-              successMessage: "Login successful",
-            );
-          },
-        );
-        return true;
-      },
-    );
-  }
-
-  Future<bool> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phoneNumber,
     required String password,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state = state.copyWith(status: AuthStatus.loading);
 
-    final result = await _registerUseCase(
+    final result = await _registerUsecase(
       RegisterParams(
         fullName: fullName,
         email: email,
@@ -103,49 +42,65 @@ class AuthViewModel extends Notifier<AuthState> {
       ),
     );
 
-    return result.fold(
-          (failure) {
-        state = state.copyWith(isLoading: false, errorMessage: failure.message);
-        return false;
-      },
-          (_) async {
-        final current = await _getCurrentUserUseCase();
-        current.fold(
-              (_) {
-            state = state.copyWith(
-              isLoading: false,
-              successMessage: "Account created successfully",
-            );
-          },
-              (user) {
-            state = state.copyWith(
-              isLoading: false,
-              user: user,
-              successMessage: "Account created successfully",
-            );
-          },
-        );
-        return true;
-      },
+    result.fold(
+      (failure) => state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: failure.message,
+      ),
+      (success) => state = state.copyWith(status: AuthStatus.registered),
+    );
+  }
+
+  Future<void> login({required String email, required String password}) async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _loginUsecase(
+      LoginParams(email: email, password: password),
+    );
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: failure.message,
+      ),
+      (user) =>
+          state = state.copyWith(status: AuthStatus.authenticated, user: user),
+    );
+  }
+
+  Future<void> getCurrentUser() async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _getCurrentUserUsecase();
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        errorMessage: failure.message,
+      ),
+      (user) =>
+          state = state.copyWith(status: AuthStatus.authenticated, user: user),
     );
   }
 
   Future<void> logout() async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state = state.copyWith(status: AuthStatus.loading);
 
-    final result = await _logoutUseCase();
+    final result = await _logoutUsecase();
 
     result.fold(
-          (failure) {
-        state = state.copyWith(isLoading: false, errorMessage: failure.message);
-      },
-          (_) {
-        state = state.copyWith(
-          isLoading: false,
-          user: null,
-          successMessage: "Logged out",
-        );
-      },
+      (failure) => state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: failure.message,
+      ),
+      (success) => state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        user: null,
+      ),
     );
+  }
+
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
   }
 }

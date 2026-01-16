@@ -1,69 +1,92 @@
-import 'package:hive/hive.dart';
-import 'package:quick_menu/core/constants/hive_table_constants.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quick_menu/core/services/hive/hive_service.dart';
+import 'package:quick_menu/core/services/storage/user_session_service.dart';
 import 'package:quick_menu/features/auth/data/datasource/auth_datasource.dart';
 import 'package:quick_menu/features/auth/data/models/auth_hive_model.dart';
 
-class AuthLocalDataSource implements AuthDataSource {
-  Box<AuthHiveModel> get _box =>
-      Hive.box<AuthHiveModel>(HiveTableConstants.authBox);
+final authLocalDatasourceProvider = Provider<AuthLocalDataSource>((ref) {
+  final hiveService = ref.read(hiveServiceProvider);
+  final userSessionService = ref.read(userSessionServiceProvider);
+  return AuthLocalDataSource(
+    hiveService: hiveService,
+    userSessionService: userSessionService,
+  );
+});
 
-  String _key(String email) => email.toLowerCase().trim();
+class AuthLocalDataSource implements IAuthLocalDataSource{
+
+  final HiveService _hiveService;
+  final UserSessionService _userSessionService;
+
+  AuthLocalDataSource({
+    required HiveService hiveService,
+    required UserSessionService userSessionService,
+  }) : _hiveService = hiveService,
+       _userSessionService = userSessionService;
 
   @override
-  Future<String?> register(AuthHiveModel user) async {
+  Future<AuthHiveModel> register(AuthHiveModel user) async {
+    return await _hiveService.register(user);
+  }
+      
+  @override
+  Future<AuthHiveModel?> getCurrentUser() async {
     try {
-      final key = _key(user.email);
-
-      if (_box.containsKey(key)) {
-        return "Email already registered";
+      // Check if user is logged in
+      if (!_userSessionService.isLoggedIn()) {
+        return null;
       }
 
-      await _box.put(key, user);
-      await saveCurrentUser(user);
+      // Get user ID from session
+      final userId = _userSessionService.getCurrentUserId();
+      if (userId == null) {
+        return null;
+      }
 
-      return null;
+      // Fetch user from Hive database
+      return _hiveService.getUserById(userId);
     } catch (e) {
-      return "Register error: $e";
+      return null;
     }
   }
 
+
   @override
-  Future<String?> login(String email, String password) async {
+  Future<AuthHiveModel?> login(String email, String password) async {
     try {
-      final key = _key(email);
-      final user = _box.get(key);
-
-      if (user == null) return "User not found. Please sign up first.";
-      if (user.password != password) return "Incorrect password";
-
-      await saveCurrentUser(user);
+      final user = await _hiveService.loginUser(email, password);
+      if (user != null && user.authId != null) {
+        // Save user session to SharedPreferences : Pachi app restart vayo vani pani user logged in rahos
+        await _userSessionService.saveUserSession(
+          userId: user.authId!,
+          email: user.email,
+          fullName: user.fullName,
+          phoneNumber: user.phoneNumber,
+        );
+      }
+      return user;
+      } catch (e) {
       return null;
+    } 
+  }
+
+  @override
+  Future<bool> logout() async {
+    try {
+      await _hiveService.logoutUser();
+      return Future.value(true);
     } catch (e) {
-      return "Login error: $e";
+      return Future.value(false);
     }
   }
-
+  
   @override
-  Future<void> saveCurrentUser(AuthHiveModel user) async {
-    // ✅ store a COPY (prevents Hive same-object two-keys issue)
-    final copy = AuthHiveModel(
-      id: user.id,
-      fullName: user.fullName,
-      email: _key(user.email),
-      phoneNumber: user.phoneNumber,
-      password: user.password,
-    );
-
-    await _box.put(HiveTableConstants.currentUserKey, copy);
-  }
-
-  @override
-  AuthHiveModel? getCurrentUser() {
-    return _box.get(HiveTableConstants.currentUserKey);
-  }
-
-  @override
-  Future<void> logout() async {
-    await _box.delete(HiveTableConstants.currentUserKey);
+  Future<AuthHiveModel?> getUserByEmail(String email) async {
+    try {
+      return _hiveService.getUserByEmail(email);
+    } catch (e) {
+      return null;
+    }
   }
 }

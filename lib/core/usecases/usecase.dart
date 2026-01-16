@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
-import '../error/failure.dart';
+import 'package:quick_menu/core/error/failure.dart';
 
-abstract class UseCase<Type> {
-  Future<Either<Failure, Type>> call();
+abstract interface class UsecaseWithParms<SucessType, Params> {
+  Future<Either<Failure, SucessType>> call(Params params);
 }
 
-abstract class UseCaseWithParams<Type, Params> {
-  Future<Either<Failure, Type>> call(Params params);
+abstract interface class UsecaseWithoutParms<SuccessType> {
+  Future<Either<Failure, SuccessType>> call();
 }

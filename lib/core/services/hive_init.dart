@@ -14,6 +14,6 @@ class HiveInit {
     }
 
     // Open boxes (add more boxes here in future)
-    await Hive.openBox<AuthHiveModel>(HiveTableConstants.authBox);
+    await Hive.openBox<AuthHiveModel>(HiveTableConstants.authTable);
   }
 }

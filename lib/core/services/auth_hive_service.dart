@@ -4,13 +4,13 @@ import '../../features/auth/data/models/auth_hive_model.dart';
 
 class AuthHiveService {
   Box<AuthHiveModel> get _box =>
-      Hive.box<AuthHiveModel>(HiveTableConstants.authBox);
+      Hive.box<AuthHiveModel>(HiveTableConstants.authTable);
 
   String _key(String email) => email.toLowerCase().trim();
 
   AuthHiveModel _copy(AuthHiveModel user) {
     return AuthHiveModel(
-      id: user.id,
+      authId: user.authId,
       fullName: user.fullName,
       email: _key(user.email),
       phoneNumber: user.phoneNumber,
@@ -33,7 +33,7 @@ class AuthHiveService {
       }
 
       final user = AuthHiveModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        authId: DateTime.now().millisecondsSinceEpoch.toString(),
         fullName: fullName.trim(),
         email: key,
         phoneNumber: phoneNumber.trim(),

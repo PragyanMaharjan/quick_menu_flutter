@@ -4,8 +4,6 @@ import '../../../../core/utils/snackbar_utils.dart';
 import 'order_screen.dart';
 import 'profile_screen.dart';
 
-
-
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -16,6 +14,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
+  // ignore: unused_element
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
   }
@@ -67,7 +66,7 @@ class HomeTab extends StatelessWidget {
       subtitle: "Perfect for whole family",
       shortDesc: "A delightful meal for family moments.",
       fullDesc:
-      "Includes 2 pizzas, 1 large fries, 4 drinks and a dessert. Perfect for sharing.",
+          "Includes 2 pizzas, 1 large fries, 4 drinks and a dessert. Perfect for sharing.",
       price: "Rs. 899",
       imagePath: "assets/image/family_combo.jpeg",
     ),
@@ -75,7 +74,8 @@ class HomeTab extends StatelessWidget {
       title: "Chicken Chilli",
       subtitle: "Spicy & Crispy",
       shortDesc: "Crispy chicken tossed in chilli sauce.",
-      fullDesc: "Juicy crispy chicken coated with spicy chilli sauce and capsicum.",
+      fullDesc:
+          "Juicy crispy chicken coated with spicy chilli sauce and capsicum.",
       price: "Rs. 420",
       imagePath: "assets/image/chickenchilli.jpeg",
     ),
@@ -314,14 +314,14 @@ class HomeTab extends StatelessWidget {
               children: items
                   .map(
                     (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: menuCard(
-                    item: item,
-                    onTap: () => _showDishDetails(context, item),
-                    onDescriptionTap: () => _showDishDetails(context, item),
-                  ),
-                ),
-              )
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: menuCard(
+                        item: item,
+                        onTap: () => _showDishDetails(context, item),
+                        onDescriptionTap: () => _showDishDetails(context, item),
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -434,10 +434,7 @@ Widget menuCard({
               width: 70,
               height: 70,
               color: Colors.white.withOpacity(0.9),
-              child: Image.asset(
-                item.imagePath,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(item.imagePath, fit: BoxFit.cover),
             ),
           ),
         ],

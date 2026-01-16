@@ -1,21 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:quick_menu/core/error/failure.dart';
-import '../entities/auth_entity.dart';
+import 'package:quick_menu/features/auth/domain/entities/auth_entity.dart';
 
-abstract class AuthRepository {
-  Future<Either<Failure, bool>> register({
-    required String fullName,
-    required String email,
-    required String phoneNumber,
-    required String password,
-  });
-
-  Future<Either<Failure, bool>> login({
-    required String email,
-    required String password,
-  });
-
+abstract interface class IAuthRepository {
+  Future<Either<Failure, bool>> register(AuthEntity entity);
+  Future<Either<Failure, AuthEntity>> login(String email, String password);
+  Future<Either<Failure, AuthEntity>> getCurrentUser();
   Future<Either<Failure, bool>> logout();
-
-  Future<Either<Failure, AuthEntity?>> getCurrentUser();
 }
