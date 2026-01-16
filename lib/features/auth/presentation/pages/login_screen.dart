@@ -8,7 +8,6 @@ import '../../../dashboard/presentation/pages/dashboard_screen.dart';
 import '../view_model/auth_view_model.dart';
 import '../state/auth_state.dart';
 
-
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -51,18 +50,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      await ref.read(authViewModelProvider.notifier).login(
-        email: mail.text,
-        password: pass.text,
-      );
+      await ref
+          .read(authViewModelProvider.notifier)
+          .login(email: mail.text, password: pass.text);
 
       if (!mounted) return;
 
       final authState = ref.read(authViewModelProvider);
       if (authState.status == AuthStatus.authenticated) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Login successful!')));
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const DashboardScreen()),
@@ -81,64 +79,68 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = authState.status == AuthStatus.loading;
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text(
-          "EverBlue",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+          "Quick Scan",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
         ),
         centerTitle: true,
         backgroundColor: Colors.teal,
+        elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                SizedBox(
-                  height: 100,
-                  width: double.infinity,
-                  child: const Center(
-                    child: Text(
-                      "Log in",
-                      style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                const SizedBox(height: 40),
+
+                const Text(
+                  "Welcome Back",
+                  style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(
-                  height: 350,
-                  // child: Image.asset('assets/images/profile.png'),
+                const SizedBox(height: 8),
+                const Text(
+                  "Login to continue",
+                  style: TextStyle(color: Colors.grey),
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  child: Column(
-                    children: [
-                      MyTextformfield(
-                        labelText: "Email",
-                        hintText: 'Enter valid Email',
-                        controller: mail,
-                        errorMessage: 'Enter a valid email',
-                        validator: validateEmail,
-                      ),
-                      const SizedBox(height: 15),
-                      MyTextformfield(
-                        labelText: "Password",
-                        hintText: 'Enter valid password',
-                        controller: pass,
-                        errorMessage: 'Enter a correct password',
-                        validator: validatePassword,
-                        obscureText: true,
-                      ),
-                      const SizedBox(height: 15),
-                      MyButton(
-                        onPressed: isLoading ? null : _handleLogin,
-                        text: isLoading ? "Logging in..." : "Log In",
-                      ),
-                    ],
-                  ),
+
+                const SizedBox(height: 40),
+
+                MyTextformfield(
+                  labelText: "Email",
+                  hintText: 'Enter valid Email',
+                  controller: mail,
+                  errorMessage: 'Enter a valid email',
+                  validator: validateEmail,
                 ),
+
                 const SizedBox(height: 20),
+
+                MyTextformfield(
+                  labelText: "Password",
+                  hintText: 'Enter valid password',
+                  controller: pass,
+                  errorMessage: 'Enter a correct password',
+                  validator: validatePassword,
+                  obscureText: true,
+                ),
+
+                const SizedBox(height: 30),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: MyButton(
+                    onPressed: isLoading ? null : _handleLogin,
+                    text: isLoading ? "Logging in..." : "Log In",
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
                 GestureDetector(
                   onTap: () {
                     Navigator.pushReplacement(
@@ -148,10 +150,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     );
                   },
-                  child: const Center(
-                    child: Text(
-                      "Don't have an account? Sign up",
-                      style: TextStyle(color: Colors.teal),
+                  child: const Text(
+                    "Don't have an account? Sign up",
+                    style: TextStyle(
+                      color: Colors.teal,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

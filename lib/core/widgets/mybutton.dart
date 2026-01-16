@@ -8,17 +8,31 @@ class MyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDisabled = onPressed == null;
+
     return SizedBox(
       width: double.infinity,
+      height: 50,
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: onPressed == null ? Colors.grey : Colors.blueAccent,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        ),
         onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isDisabled
+              ? Colors.grey.shade400
+              : Colors.blueAccent,
+          elevation: isDisabled ? 0 : 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
         child: Text(
           text,
-          style: const TextStyle(color: Colors.white, fontSize: 20),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );
