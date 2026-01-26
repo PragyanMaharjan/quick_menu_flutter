@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class SnackBarUtils {
-  /// Base snackbar (used internally)
   static void _show(
     BuildContext context,
     String message, {
@@ -13,10 +12,10 @@ class SnackBarUtils {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: backgroundColor,
         duration: duration,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        backgroundColor: backgroundColor,
         content: Row(
           children: [
             if (icon != null) ...[
@@ -39,7 +38,6 @@ class SnackBarUtils {
     );
   }
 
-  /// Success snackbar
   static void success(BuildContext context, String message) {
     _show(
       context,
@@ -49,23 +47,30 @@ class SnackBarUtils {
     );
   }
 
-  /// Error snackbar
   static void error(BuildContext context, String message) {
     _show(
       context,
       message,
-      backgroundColor: Colors.redAccent,
+      backgroundColor: Colors.red.shade700,
       icon: Icons.error_outline,
     );
   }
 
-  /// Info snackbar
   static void info(BuildContext context, String message) {
     _show(
       context,
       message,
-      backgroundColor: Colors.blueGrey.shade700,
+      backgroundColor: Colors.orange.shade700,
       icon: Icons.info_outline,
+    );
+  }
+
+  static void showSnackBar(BuildContext context, String message) {
+    _show(
+      context,
+      message,
+      backgroundColor: Colors.grey.shade800,
+      icon: Icons.notifications_active_outlined,
     );
   }
 }

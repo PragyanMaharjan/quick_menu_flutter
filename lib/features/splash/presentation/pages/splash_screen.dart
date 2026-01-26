@@ -15,20 +15,27 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      // Check if user is already logged in
+    _checkLoginStatus();
+  }
+
+  void _checkLoginStatus() async {
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
     final userSessionService = ref.read(userSessionServiceProvider);
     final isLoggedIn = userSessionService.isLoggedIn();
 
     if (isLoggedIn) {
-      // Navigate to Dashboard if user is logged in
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
     } else {
-      // Navigate to Onboarding if user is not logged in
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     }
-    });
   }
 
   @override
@@ -38,7 +45,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       body: Center(
         child: Image.asset(
           "assets/image/jhasha_logo.jpg",
-          width: 150, // adjust size if needed
+          width: 150,
           height: 150,
         ),
       ),

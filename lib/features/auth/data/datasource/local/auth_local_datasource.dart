@@ -56,10 +56,10 @@ class AuthLocalDataSource implements IAuthLocalDataSource{
   Future<AuthHiveModel?> login(String email, String password) async {
     try {
       final user = await _hiveService.loginUser(email, password);
-      if (user != null && user.authId != null) {
+      if (user != null) {
         // Save user session to SharedPreferences : Pachi app restart vayo vani pani user logged in rahos
         await _userSessionService.saveUserSession(
-          userId: user.authId!,
+          userId: user.authId,
           email: user.email,
           fullName: user.fullName,
           phoneNumber: user.phoneNumber,

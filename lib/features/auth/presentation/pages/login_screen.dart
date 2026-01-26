@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:quick_menu/core/widgets/mytextfield.dart';
 import 'package:quick_menu/core/widgets/mybutton.dart';
-import 'package:quick_menu/features/auth/presentation/pages/sigup_screen.dart';
-import '../../../dashboard/presentation/pages/dashboard_screen.dart';
+import 'package:quick_menu/core/widgets/mytextfield.dart';
+import 'package:quick_menu/core/utils/snackbar_utils.dart';
 import '../view_model/auth_view_model.dart';
 import '../state/auth_state.dart';
+import 'sigup_screen.dart';
+import '../../../dashboard/presentation/pages/dashboard_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -26,50 +27,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter an email';
-    }
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email';
-    }
-    return null;
-  }
-
-  String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter a password';
-    }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
-    return null;
-  }
-
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       await ref
           .read(authViewModelProvider.notifier)
           .login(email: mail.text, password: pass.text);
 
-      if (!mounted) return;
-
       final authState = ref.read(authViewModelProvider);
 
       if (authState.status == AuthStatus.authenticated) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Login successful")));
-
+        SnackBarUtils.success(context, "Login successful!");
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
         );
       } else if (authState.status == AuthStatus.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authState.errorMessage ?? "Login failed")),
-        );
+        SnackBarUtils.error(context, authState.errorMessage ?? "Login failed");
       }
     }
   }
@@ -80,88 +53,73 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = authState.status == AuthStatus.loading;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        title: const Text(
-          "Quick Scan",
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.teal,
-        elevation: 0,
-      ),
+      backgroundColor: Colors.red.shade50,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 40),
-
-              const Text(
-                "Welcome Back",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const SizedBox(height: 80),
+            Icon(Icons.restaurant_menu, size: 80, color: Colors.red.shade700),
+            const SizedBox(height: 20),
+            Text(
+              "Welcome Back",
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+                color: Colors.red.shade700,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                "Login to continue",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
-              ),
-
-              const SizedBox(height: 40),
-
-              MyTextformfield(
-                labelText: "Email",
-                hintText: "Enter your email",
-                controller: mail,
-                errorMessage: "Email is required",
-                validator: validateEmail,
-                keyboardType: TextInputType.emailAddress,
-              ),
-
-              const SizedBox(height: 20),
-
-              MyTextformfield(
-                labelText: "Password",
-                hintText: "Enter your password",
-                controller: pass,
-                errorMessage: "Password is required",
-                validator: validatePassword,
-                obscureText: true,
-              ),
-
-              const SizedBox(height: 30),
-
-              MyButton(
-                onPressed: isLoading ? null : _handleLogin,
-                text: isLoading ? "Logging in..." : "Log In",
-              ),
-
-              const SizedBox(height: 30),
-
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SignupScreen()),
-                  );
-                },
-                child: const Text(
-                  "Don't have an account? Sign up",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.teal,
-                    fontWeight: FontWeight.w600,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Login to continue to your restaurant",
+              style: TextStyle(color: Colors.red.shade300),
+            ),
+            const SizedBox(height: 40),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  MyTextformfield(
+                    labelText: "Email",
+                    hintText: "Enter your email",
+                    controller: mail,
+                    errorMessage: "Email is required",
+                    prefixIcon: Icons.email,
                   ),
-                ),
+                  MyTextformfield(
+                    labelText: "Password",
+                    hintText: "Enter your password",
+                    controller: pass,
+                    errorMessage: "Password is required",
+                    obscureText: true,
+                    prefixIcon: Icons.lock,
+                  ),
+                  const SizedBox(height: 30),
+                  MyButton(
+                    onPressed: isLoading ? null : _handleLogin,
+                    text: isLoading ? "Logging in..." : "Log In",
+                    buttonColor: Colors.red.shade700,
+                  ),
+                  const SizedBox(height: 25),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SignupScreen()),
+                      );
+                    },
+                    child: Text(
+                      "Don't have an account? Sign up",
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

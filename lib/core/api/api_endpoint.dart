@@ -4,11 +4,11 @@ class ApiEndpoints {
   // Base URL - change this for production
   static const String baseUrl = 'http://10.0.2.2:3000/quickScan';
   //static const String baseUrl = 'http://localhost:3000/quickScan';
-  //static const String baseUrl = 'http://192.168.1.xxx:3000/everblue'; // Replace xxx with your IP
-  // For Android Emulator use: 'http://10.0.2.2:3000/everblue'
-  // For iOS Simulator use: 'http://localhost:3000/everblue'
-  // For Physical Device use your computer's IP: 'http://192.168.x.x:3000/everblue'
-  // For Windows Desktop use: 'http://localhost:3000/everblue'
+  //static const String baseUrl = 'http://192.168.1.xxx:3000/quickScan'; // Replace xxx with your IP
+  // For Android Emulator use: 'http://10.0.2.2:3000/quickScan'
+  // For iOS Simulator use: 'http://localhost:3000/quickScan'
+  // For Physical Device use your computer's IP: 'http://192.168.x.x:3000/quickScan'
+  // For Windows Desktop use: 'http://localhost:3000/quickScan'
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
