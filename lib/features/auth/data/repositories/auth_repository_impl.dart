@@ -65,14 +65,24 @@ class AuthRepository implements IAuthRepository {
         }
         return const Left(ApiFailure(message: "Invalid email or password"));
       } on DioException catch (e) {
+        print('❌ [REPO] DioException during upload: ${e.message}');
+        print('❌ [REPO] Status code: ${e.response?.statusCode}');
+        print('❌ [REPO] Response data: ${e.response?.data}');
+
+        String errorMessage = 'Photo upload failed: ${e.message}';
+        if (e.response?.data is Map<String, dynamic>) {
+          final responseData = e.response!.data as Map<String, dynamic>;
+          errorMessage = responseData['message'] ?? errorMessage;
+        } else if (e.response?.data is String) {
+          errorMessage = e.response!.data.toString();
+        }
+
         return Left(
-          ApiFailure(
-            message: e.response?.data?['message'] ?? 'Login failed',
-            statusCode: e.response?.statusCode,
-          ),
+          ApiFailure(message: errorMessage, statusCode: e.response?.statusCode),
         );
       } catch (e) {
-        return Left(ApiFailure(message: e.toString()));
+        print('❌ [REPO] General exception: ${e.toString()}');
+        return Left(ApiFailure(message: 'Photo upload error: ${e.toString()}'));
       }
     } else {
       try {
@@ -142,6 +152,54 @@ class AuthRepository implements IAuthRepository {
       } catch (e) {
         return Left(LocalDatabaseFailure(message: e.toString()));
       }
+    }
+  }
+
+  @override
+  Future<Either<Failure, AuthEntity>> uploadUserPhoto({
+    required String userId,
+    required String photoPath,
+  }) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final apiModel = await _authRemoteDataSource.uploadUserPhoto(
+          userId,
+          photoPath,
+        );
+        final entity = apiModel.toEntity();
+        return Right(entity);
+      } on DioException catch (e) {
+        String errorMessage = 'Photo upload failed';
+        if (e.response?.data is Map<String, dynamic>) {
+          final responseData = e.response!.data as Map<String, dynamic>;
+          errorMessage = responseData['message'] ?? errorMessage;
+        } else if (e.response?.data is String) {
+          errorMessage = e.response!.data.toString();
+        }
+
+        if (e.message != null) {
+          errorMessage = '$errorMessage (${e.message})';
+        }
+
+        if (e.response?.statusCode == 400) {
+          errorMessage = 'Bad request - Check field names match backend';
+        } else if (e.response?.statusCode == 401) {
+          errorMessage = 'Unauthorized - Token expired or invalid';
+        } else if (e.response?.statusCode == 413) {
+          errorMessage = 'File too large - Reduce image size';
+        } else if (e.response?.statusCode == 500) {
+          errorMessage = 'Server error - Check backend logs';
+        }
+
+        return Left(
+          ApiFailure(message: errorMessage, statusCode: e.response?.statusCode),
+        );
+      } catch (e) {
+        print('❌ General exception in uploadUserPhoto: $e');
+        return Left(ApiFailure(message: 'Upload error: ${e.toString()}'));
+      }
+    } else {
+      return const Left(ApiFailure(message: "No internet connection"));
     }
   }
 }

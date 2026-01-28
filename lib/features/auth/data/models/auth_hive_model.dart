@@ -21,12 +21,16 @@ class AuthHiveModel {
   @HiveField(4)
   final String password;
 
+  @HiveField(5)
+  final String? photoUrl;
+
   const AuthHiveModel({
     required this.authId,
     required this.fullName,
     required this.email,
     required this.phoneNumber,
     required this.password,
+    this.photoUrl,
   });
 
   // toEntity
@@ -37,6 +41,7 @@ class AuthHiveModel {
       email: email,
       phoneNumber: phoneNumber,
       password: password,
+      photoUrl: photoUrl,
     );
   }
 }
