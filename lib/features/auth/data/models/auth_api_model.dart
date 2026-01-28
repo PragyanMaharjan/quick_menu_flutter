@@ -6,6 +6,7 @@ class AuthApiModel {
   final String email;
   late final String? phoneNumber;
   final String? password;
+  final String? photoUrl;
 
   AuthApiModel({
     this.id,
@@ -13,6 +14,7 @@ class AuthApiModel {
     required this.email,
     this.phoneNumber,
     this.password,
+    this.photoUrl,
   });
 
   // toJSON
@@ -23,17 +25,25 @@ class AuthApiModel {
       'email': email,
       if (phoneNumber != null) 'phoneNumber': phoneNumber,
       if (password != null) 'password': password,
+      if (photoUrl != null) 'photoUrl': photoUrl,
     };
   }
 
-  // fromJson
+  /// Factory constructor to parse JSON from backend
+  /// Handles both direct data objects and nested response structures
   factory AuthApiModel.fromJson(Map<String, dynamic> json) {
+    // Extract photoUrl from either 'photoUrl' or 'profilePicture' fields
+    final photoUrl =
+        json['photoUrl'] as String? ?? json['profilePicture'] as String?;
+
     return AuthApiModel(
+      // Handle both 'id' and '_id' from backend
       id: json['id'] as String? ?? json['_id'] as String?,
-      fullName: json['name'] as String,
-      email: json['email'] as String,
+      fullName: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
       phoneNumber: json['phoneNumber'] as String?,
       password: json['password'] as String?,
+      photoUrl: photoUrl,
     );
   }
 
@@ -45,6 +55,7 @@ class AuthApiModel {
       email: email,
       phoneNumber: phoneNumber,
       password: password,
+      photoUrl: photoUrl,
     );
   }
 
@@ -56,6 +67,7 @@ class AuthApiModel {
       email: entity.email,
       phoneNumber: entity.phoneNumber,
       password: entity.password,
+      photoUrl: entity.photoUrl,
     );
   }
 }

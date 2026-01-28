@@ -24,6 +24,7 @@ class UserSessionService {
   static const String _keyUserFullName = 'user_full_name';
   static const String _keyUserPhoneNumber = 'user_phone_number';
   static const String _keyToken = 'auth_token';
+  static const String _keyUserPhotoUrl = 'user_photo_url';
 
   UserSessionService({required SharedPreferences prefs}) : _prefs = prefs;
 
@@ -33,6 +34,7 @@ class UserSessionService {
     required String email,
     required String fullName,
     String? phoneNumber,
+    String? photoUrl,
   }) async {
     await _prefs.setBool(_keyIsLoggedIn, true);
     await _prefs.setString(_keyUserId, userId);
@@ -40,6 +42,9 @@ class UserSessionService {
     await _prefs.setString(_keyUserFullName, fullName);
     if (phoneNumber != null) {
       await _prefs.setString(_keyUserPhoneNumber, phoneNumber);
+    }
+    if (photoUrl != null) {
+      await _prefs.setString(_keyUserPhotoUrl, photoUrl);
     }
   }
 
@@ -68,6 +73,11 @@ class UserSessionService {
     return _prefs.getString(_keyUserPhoneNumber);
   }
 
+  // Get current user photo URL
+  String? getCurrentUserPhotoUrl() {
+    return _prefs.getString(_keyUserPhotoUrl);
+  }
+
   // Save token
   Future<void> saveToken(String token) async {
     await _secureStorage.write(key: _keyToken, value: token);
@@ -78,7 +88,6 @@ class UserSessionService {
     return await _secureStorage.read(key: _keyToken);
   }
 
-
   // Clear user session (logout)
   Future<void> clearSession() async {
     await _prefs.remove(_keyIsLoggedIn);
@@ -86,6 +95,7 @@ class UserSessionService {
     await _prefs.remove(_keyUserEmail);
     await _prefs.remove(_keyUserFullName);
     await _prefs.remove(_keyUserPhoneNumber);
+    await _prefs.remove(_keyUserPhotoUrl);
     await _secureStorage.delete(key: _keyToken);
   }
 }
