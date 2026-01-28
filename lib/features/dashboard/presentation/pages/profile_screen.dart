@@ -1,13 +1,490 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../auth/presentation/pages/login_screen.dart';
 import 'package:quick_menu/core/services/storage/user_session_service.dart';
+import 'package:quick_menu/features/auth/domain/usecases/upload_user_photo_usecase.dart';
+import 'about_screen.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  File? _profileImage;
+  bool _isEditing = false;
+  bool _notificationsEnabled = true;
+  final ImagePicker _imagePicker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    final userSessionService = ref.read(userSessionServiceProvider);
+    _nameController = TextEditingController(
+      text: userSessionService.getCurrentUserFullName() ?? '',
+    );
+    _emailController = TextEditingController(
+      text: userSessionService.getCurrentUserEmail() ?? '',
+    );
+    _phoneController = TextEditingController(
+      text: userSessionService.getCurrentUserPhoneNumber() ?? '',
+    );
+    _loadNotificationPreference();
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    // Check notification permission status
+    final notificationStatus = await Permission.notification.status;
+
+    if (notificationStatus.isDenied) {
+      // Request notification permission if not already requested
+      final result = await Permission.notification.request();
+      setState(() {
+        _notificationsEnabled = result.isGranted;
+      });
+    } else if (notificationStatus.isGranted) {
+      setState(() {
+        _notificationsEnabled = true;
+      });
+    } else if (notificationStatus.isPermanentlyDenied) {
+      // Permission is permanently denied, show dialog directing to settings
+      _showNotificationPermissionDialog();
+      setState(() {
+        _notificationsEnabled = false;
+      });
+    } else {
+      setState(() {
+        _notificationsEnabled = true;
+      });
+    }
+  }
+
+  void _showNotificationPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Notification Permission'),
+        content: const Text(
+          'This app needs notification permission to send you updates. '
+          'Please enable it in settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(context);
+            },
+            child: const Text('Go to Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveNotificationPreference(bool value) async {
+    setState(() {
+      _notificationsEnabled = value;
+    });
+    // Save to local storage here if needed
+    // Example: await SharedPreferences.getInstance().setBool('notifications_enabled', value);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _notificationsEnabled
+              ? 'Notifications enabled'
+              : 'Notifications disabled',
+        ),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  /// Constructs the full backend URL for the profile picture
+  /// Handles URL encoding and cache busting
+  String _constructProfileImageUrl(String photoPath) {
+    // Backend base URL - adjust based on your environment
+    // For Android Emulator: http://10.0.2.2:3000
+    // For iOS Simulator: http://localhost:3000
+    // For physical device: http://<your-machine-ip>:3000
+    const String backendBaseUrl = 'http://10.0.2.2:3000';
+
+    print('📸 Input photoPath: $photoPath');
+
+    // If it's already a full URL, use it
+    if (photoPath.startsWith('http')) {
+      print('✅ Already full URL, using as-is');
+      return photoPath;
+    }
+
+    // Remove /public/ prefix if present (backend might include it in the path)
+    String cleanPath = photoPath;
+    if (cleanPath.startsWith('/public/')) {
+      cleanPath = cleanPath.replaceFirst('/public/', '/');
+      print('📸 Removed /public/ prefix: $cleanPath');
+    }
+
+    // Construct full URL from relative path
+    final fullUrl = '$backendBaseUrl$cleanPath';
+    print('📸 Constructed URL (before encoding): $fullUrl');
+
+    // Add cache buster to force fresh image load
+    final urlWithTimestamp =
+        '$fullUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+
+    print('✅ Final Profile Image URL: $urlWithTimestamp');
+    return urlWithTimestamp;
+  }
+
+  /// Build image provider for profile picture with fallback
+  ImageProvider _buildProfileImageProvider() {
+    final userSessionService = ref.read(userSessionServiceProvider);
+    final photoUrl = userSessionService.getCurrentUserPhotoUrl();
+
+    // Show placeholder if no profile picture
+    if (photoUrl == null || photoUrl.isEmpty) {
+      print('⚠️ No profile picture URL found, showing placeholder');
+      return const AssetImage('assets/image/background.jpg');
+    }
+
+    try {
+      final fullUrl = _constructProfileImageUrl(photoUrl);
+      return NetworkImage(fullUrl);
+    } catch (e) {
+      print('❌ Error constructing image URL: $e');
+      return const AssetImage('assets/image/background.jpg');
+    }
+  }
+
+  Future<void> _pickProfileImage() async {
+    // Show dialog to choose between camera and gallery
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Choose Image Source'),
+        content: const Text('Select where to pick your profile photo from:'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickFromGallery();
+            },
+            child: const Text('Gallery'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickFromCamera();
+            },
+            child: const Text('Camera'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickFromGallery() async {
+    final XFile? pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      final file = File(pickedFile.path);
+      print('✅ Image picked from gallery: ${file.path}');
+      print('✅ File exists: ${await file.exists()}');
+      print('✅ File size: ${await file.length()} bytes');
+
+      setState(() {
+        _profileImage = file;
+      });
+    }
+  }
+
+  Future<void> _pickFromCamera() async {
+    try {
+      // Check current permission status
+      final cameraStatus = await Permission.camera.status;
+
+      print('📸 Camera permission status: $cameraStatus');
+
+      // If already granted, proceed to pick image
+      if (cameraStatus.isGranted) {
+        _openCameraPicker();
+        return;
+      }
+
+      // If permission is restricted or denied, request it
+      if (cameraStatus.isDenied) {
+        print('📸 Camera permission denied, requesting...');
+        _showCameraPermissionDialog();
+        return;
+      }
+
+      // If permission is permanently denied
+      if (cameraStatus.isPermanentlyDenied) {
+        print('📸 Camera permission permanently denied');
+        _showGoToSettingsDialog();
+        return;
+      }
+
+      // If permission is restricted
+      if (cameraStatus.isRestricted) {
+        print('📸 Camera permission restricted');
+        _showGoToSettingsDialog();
+        return;
+      }
+    } catch (e) {
+      print('❌ Error checking camera permission: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error accessing camera: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _showCameraPermissionDialog() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Camera Permission'),
+        content: const Text(
+          'This app needs access to your camera to take photos. How would you like to proceed?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Don\'t Allow'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _requestCameraPermissionOnce();
+            },
+            child: const Text('Only this time'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _requestCameraPermissionAlways();
+            },
+            child: const Text('Always Allow'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _requestCameraPermissionOnce() async {
+    try {
+      final status = await Permission.camera.request();
+      print('📸 Permission request result: $status');
+
+      if (status.isGranted) {
+        print('✅ Camera permission granted');
+        _openCameraPicker();
+      } else if (status.isDenied) {
+        print('❌ Camera permission denied by user');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Camera permission is required to take photos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error requesting camera permission: $e');
+    }
+  }
+
+  Future<void> _requestCameraPermissionAlways() async {
+    try {
+      final status = await Permission.camera.request();
+      print('📸 Permission request result: $status');
+
+      if (status.isGranted) {
+        print('✅ Camera permission granted');
+        _openCameraPicker();
+      } else if (status.isPermanentlyDenied) {
+        print('❌ Camera permission permanently denied');
+        _showGoToSettingsDialog();
+      }
+    } catch (e) {
+      print('❌ Error requesting camera permission: $e');
+    }
+  }
+
+  Future<void> _openCameraPicker() async {
+    final XFile? pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      final file = File(pickedFile.path);
+      print('✅ Image captured from camera: ${file.path}');
+      print('✅ File exists: ${await file.exists()}');
+      print('✅ File size: ${await file.length()} bytes');
+
+      setState(() {
+        _profileImage = file;
+      });
+    }
+  }
+
+  void _showGoToSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Camera Permission Denied'),
+        content: const Text(
+          'Camera permission has been permanently denied. Please enable it in your app settings to use the camera.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(context);
+            },
+            child: const Text('Go to Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveProfileChanges() async {
+    final userSessionService = ref.read(userSessionServiceProvider);
+    final userId = userSessionService.getCurrentUserId();
+
+    if (userId != null) {
+      // If user selected a new profile image, upload it
+      if (_profileImage != null) {
+        try {
+          // Upload photo using the usecase
+          final uploadResult = await ref
+              .read(uploadUserPhotoUsecaseProvider)
+              .call(
+                UploadUserPhotoParams(
+                  userId: userId,
+                  photoPath: _profileImage!.path,
+                ),
+              );
+
+          // Handle the result
+          if (uploadResult.isRight()) {
+            // Photo upload successful
+            final dynamic updatedUser = uploadResult.fold(
+              (l) => null,
+              (r) => r,
+            );
+            final photoUrl = updatedUser?.photoUrl;
+            // Photo uploaded successfully, save to session
+            await userSessionService.saveUserSession(
+              userId: userId,
+              email: _emailController.text,
+              fullName: _nameController.text,
+              phoneNumber: _phoneController.text,
+              photoUrl: photoUrl,
+            );
+
+            if (mounted) {
+              // Clear image cache to force reload of new image
+              imageCache.clear();
+              imageCache.clearLiveImages();
+
+              setState(() {
+                _isEditing = false;
+                _profileImage = null;
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Profile updated successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } else {
+            // Photo upload failed
+            final failure = uploadResult.fold((l) => l, (r) => null);
+            if (failure != null && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Photo upload failed: ${failure.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error uploading photo: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } else {
+        // No photo change, just update other info
+        await userSessionService.saveUserSession(
+          userId: userId,
+          email: _emailController.text,
+          fullName: _nameController.text,
+          phoneNumber: _phoneController.text,
+        );
+
+        setState(() {
+          _isEditing = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userSessionService = ref.read(userSessionServiceProvider);
 
     return SingleChildScrollView(
@@ -35,7 +512,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 child: Column(
                   children: [
-                    // Header title with settings
+                    // Header title with Edit button
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -49,40 +526,138 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
-                            Icons.settings_outlined,
+                          icon: Icon(
+                            _isEditing ? Icons.close : Icons.edit_outlined,
                             color: Colors.white,
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            setState(() {
+                              if (_isEditing) {
+                                // Reset to original values
+                                _nameController.text =
+                                    userSessionService
+                                        .getCurrentUserFullName() ??
+                                    '';
+                                _emailController.text =
+                                    userSessionService.getCurrentUserEmail() ??
+                                    '';
+                                _phoneController.text =
+                                    userSessionService
+                                        .getCurrentUserPhoneNumber() ??
+                                    '';
+                                _profileImage = null;
+                              }
+                              _isEditing = !_isEditing;
+                            });
+                          },
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
-                    // Avatar
-                    CircleAvatar(
-                      radius: 48,
-                      backgroundColor: Colors.white.withOpacity(0.3),
-                      child: CircleAvatar(
-                        radius: 46,
-                        backgroundColor: Colors.white,
-                        backgroundImage: const AssetImage(
-                          "assets/image/background.jpg",
+                    // Avatar with Edit Button
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundColor: Colors.white.withOpacity(0.3),
+                          child: _profileImage != null
+                              ? ClipOval(
+                                  child: Image.file(
+                                    _profileImage!,
+                                    fit: BoxFit.cover,
+                                    width: 92,
+                                    height: 92,
+                                    cacheHeight: 92,
+                                    cacheWidth: 92,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print('Error loading image: $error');
+                                      return Container(
+                                        color: Colors.grey[300],
+                                        child: const Icon(Icons.person),
+                                      );
+                                    },
+                                  ),
+                                )
+                              : CircleAvatar(
+                                  radius: 46,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: _buildProfileImageProvider(),
+                                ),
                         ),
-                      ),
+                        if (_isEditing)
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _pickProfileImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Color(0xFFE05757),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 12),
 
-                    // Name
-                    const Text(
-                      "Pragyan Maharjan",
-                      style: TextStyle(
-                        fontFamily: 'OpenSans',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                    // Name - Editable
+                    if (_isEditing)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: TextField(
+                          controller: _nameController,
+                          style: const TextStyle(
+                            fontFamily: 'OpenSans',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "Enter your name",
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontFamily: 'OpenSans',
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(color: Colors.white),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.5),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      Text(
+                        _nameController.text.isNotEmpty
+                            ? _nameController.text
+                            : "Not provided",
+                        style: const TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 4),
 
                     // Status badge
@@ -96,7 +671,7 @@ class ProfileScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
-                        "🌟 Gold Member",
+                        "🌟 User",
                         style: TextStyle(
                           fontFamily: 'OpenSans',
                           fontSize: 12,
@@ -111,76 +686,115 @@ class ProfileScreen extends ConsumerWidget {
 
               const SizedBox(height: 20),
 
-              // 📊 QUICK STATS SECTION
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              // 📧 EMAIL & PHONE SECTION (EDITABLE)
+              if (_isEditing)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _StatCard(icon: "🛒", label: "Orders", value: "12"),
-                      Container(
-                        width: 1,
-                        height: 50,
-                        color: Colors.grey.shade200,
+                      const Text(
+                        "📋 Edit Information",
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                      _StatCard(icon: "💳", label: "Spent", value: "Rs. 5.2K"),
-                      Container(
-                        width: 1,
-                        height: 50,
-                        color: Colors.grey.shade200,
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: "Email",
+                          prefixIcon: const Icon(Icons.email),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
                       ),
-                      _StatCard(icon: "❤️", label: "Favorites", value: "8"),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: "Phone Number",
+                          prefixIcon: const Icon(Icons.phone),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _saveProfileChanges,
+                              icon: const Icon(Icons.save),
+                              label: const Text("Save Changes"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "📋 Contact Information",
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      infoTile(
+                        icon: Icons.person,
+                        label: "Full Name",
+                        value: _nameController.text.isNotEmpty
+                            ? _nameController.text
+                            : "Not provided",
+                        emoji: "👤",
+                      ),
+                      const SizedBox(height: 12),
+                      infoTile(
+                        icon: Icons.email,
+                        label: "Email",
+                        value: _emailController.text.isNotEmpty
+                            ? _emailController.text
+                            : "Not provided",
+                        emoji: "✉️",
+                      ),
+                      const SizedBox(height: 12),
+                      infoTile(
+                        icon: Icons.phone,
+                        label: "Phone",
+                        value: _phoneController.text.isNotEmpty
+                            ? _phoneController.text
+                            : "Not provided",
+                        emoji: "📱",
+                      ),
                     ],
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // 📝 CONTACT INFORMATION
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "📋 Contact Information",
-                      style: TextStyle(
-                        fontFamily: 'OpenSans',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    infoTile(
-                      icon: Icons.phone,
-                      label: "Phone",
-                      value: "+977 98XXXXXXXX",
-                      emoji: "📱",
-                    ),
-                    const SizedBox(height: 12),
-                    infoTile(
-                      icon: Icons.email,
-                      label: "Email",
-                      value: "yourmail@gmail.com",
-                      emoji: "✉️",
-                    ),
-                  ],
-                ),
-              ),
 
               const SizedBox(height: 20),
 
@@ -204,8 +818,8 @@ class ProfileScreen extends ConsumerWidget {
                       label: "Notifications",
                       emoji: "🔔",
                       trailing: Switch(
-                        value: true,
-                        onChanged: (_) {},
+                        value: _notificationsEnabled,
+                        onChanged: _saveNotificationPreference,
                         activeThumbColor: Colors.green,
                       ),
                     ),
@@ -244,25 +858,46 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _SettingsTile(
-                      icon: Icons.help_outline,
-                      label: "FAQs",
-                      emoji: "❓",
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Colors.grey,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AboutScreen(),
+                          ),
+                        );
+                      },
+                      child: _SettingsTile(
+                        icon: Icons.mail_outline,
+                        label: "Contact Us",
+                        emoji: "📧",
+                        trailing: const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _SettingsTile(
-                      icon: Icons.mail_outline,
-                      label: "Contact Us",
-                      emoji: "📧",
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Colors.grey,
+                    GestureDetector(
+                      onTap: () {
+                        // Chat functionality can be added here
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Chat feature coming soon!'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      },
+                      child: _SettingsTile(
+                        icon: Icons.chat_bubble_outline,
+                        label: "Chat Support",
+                        emoji: "💬",
+                        trailing: const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ],
@@ -361,47 +996,6 @@ Widget infoTile({
       ],
     ),
   );
-}
-
-// 📊 Stat card widget
-class _StatCard extends StatelessWidget {
-  final String icon;
-  final String label;
-  final String value;
-
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 24)),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            fontFamily: 'OpenSans',
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'OpenSans',
-            fontSize: 11,
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ⚙️ Settings tile widget
