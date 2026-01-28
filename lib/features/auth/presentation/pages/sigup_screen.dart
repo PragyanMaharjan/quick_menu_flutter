@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quick_menu/core/widgets/mybutton.dart';
 import 'package:quick_menu/core/widgets/mytextfield.dart';
 import 'package:quick_menu/core/utils/snackbar_utils.dart';
+import 'package:quick_menu/core/utils/validators.dart';
 import '../view_model/auth_view_model.dart';
 import '../state/auth_state.dart';
 import 'login_screen.dart';
@@ -95,6 +96,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     hintText: "Enter full name",
                     controller: name,
                     errorMessage: "Name is required",
+                    validator: Validators.validateName,
                     prefixIcon: Icons.person,
                   ),
                   MyTextformfield(
@@ -102,6 +104,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     hintText: "Enter email",
                     controller: email,
                     errorMessage: "Email is required",
+                    validator: Validators.validateEmail,
                     prefixIcon: Icons.email,
                   ),
                   MyTextformfield(
@@ -109,6 +112,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     hintText: "Enter phone number",
                     controller: number,
                     errorMessage: "Phone number is required",
+                    validator: Validators.validatePhoneNumber,
                     keyboardType: TextInputType.phone,
                     prefixIcon: Icons.phone,
                   ),
@@ -117,6 +121,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     hintText: "Enter password",
                     controller: password,
                     errorMessage: "Password is required",
+                    validator: Validators.validatePassword,
                     obscureText: true,
                     prefixIcon: Icons.lock,
                   ),
