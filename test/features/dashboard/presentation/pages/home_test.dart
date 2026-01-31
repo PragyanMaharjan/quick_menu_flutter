@@ -18,6 +18,9 @@ void main() {
       return ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+          userSessionServiceProvider.overrideWithValue(
+            UserSessionService(prefs: sharedPreferences),
+          ),
         ],
         child: const MaterialApp(home: DashboardScreen()),
       );
@@ -37,9 +40,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: DashboardScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert
       expect(find.byType(BottomNavigationBar), findsOneWidget);
@@ -50,8 +51,14 @@ void main() {
     ) async {
       // Arrange & Act
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(home: DashboardScreen(initialIndex: 0)),
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+            userSessionServiceProvider.overrideWithValue(
+              UserSessionService(prefs: sharedPreferences),
+            ),
+          ],
+          child: const MaterialApp(home: DashboardScreen(initialIndex: 0)),
         ),
       );
 
@@ -63,9 +70,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: DashboardScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Check for Container
       expect(find.byType(Container), findsWidgets);
@@ -75,9 +80,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: DashboardScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - BottomNavigationBar should have items
       final bottomNavBar = find.byType(BottomNavigationBar);
@@ -88,9 +91,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: DashboardScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Initially screen renders
       expect(find.byType(Scaffold), findsOneWidget);
@@ -100,9 +101,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: DashboardScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert
       expect(find.byType(DashboardScreen), findsOneWidget);
@@ -113,8 +112,14 @@ void main() {
     ) async {
       // Arrange & Act
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(home: DashboardScreen(initialIndex: 2)),
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+            userSessionServiceProvider.overrideWithValue(
+              UserSessionService(prefs: sharedPreferences),
+            ),
+          ],
+          child: const MaterialApp(home: DashboardScreen(initialIndex: 2)),
         ),
       );
 
@@ -126,9 +131,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: DashboardScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Check main widget hierarchy
       expect(find.byType(Scaffold), findsOneWidget);
@@ -139,9 +142,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: DashboardScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Try to tap a bottom nav item
       final bottomNavBar = find.byType(BottomNavigationBar);

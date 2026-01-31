@@ -118,7 +118,7 @@ class FoodItem {
     required this.shortDesc,
     required this.fullDesc,
     required this.price,
-    this.imagePath = 'assets/images/placeholder.png',
+    this.imagePath = 'assets/image/image.png',
   });
 }
 

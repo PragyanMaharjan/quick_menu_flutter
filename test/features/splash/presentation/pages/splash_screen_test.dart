@@ -2,16 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:quick_menu/features/splash/presentation/pages/splash_screen.dart';
 import 'package:quick_menu/core/services/storage/user_session_service.dart';
+import 'package:quick_menu/features/auth/data/models/auth_hive_model.dart';
+import 'dart:io';
 
 void main() {
   group('SplashScreen Widget Tests', () {
     late SharedPreferences sharedPreferences;
 
     setUp(() async {
+      // Initialize Hive for testing
+      final tempDir = await Directory.systemTemp.createTemp('hive_test');
+      Hive.init(tempDir.path);
+
+      // Register adapters only if not already registered
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(AuthHiveModelAdapter());
+      }
+
       SharedPreferences.setMockInitialValues({});
       sharedPreferences = await SharedPreferences.getInstance();
+    });
+
+    tearDown(() async {
+      await Hive.close();
     });
 
     Widget createWidgetUnderTest() {
@@ -46,9 +62,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SplashScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Image should exist
       final imageWidget = find.byType(Image);
@@ -57,9 +71,7 @@ void main() {
 
     testWidgets('SplashScreen is centered', (WidgetTester tester) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SplashScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Check for Center widget
       expect(find.byType(Center), findsOneWidget);
@@ -69,9 +81,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SplashScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert
       expect(find.byType(SingleChildScrollView), findsWidgets);
@@ -81,9 +91,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SplashScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Screen should render without errors
       expect(find.byType(SplashScreen), findsOneWidget);
@@ -93,9 +101,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SplashScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Check widget tree structure
       final scaffold = find.byType(Scaffold);
@@ -106,9 +112,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SplashScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Screen should be displayed
       expect(find.byType(SplashScreen), findsOneWidget);
@@ -118,9 +122,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act & Assert - Should not throw
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SplashScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       expect(find.byType(Scaffold), findsOneWidget);
     });
@@ -129,9 +131,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SplashScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Give async image loading time
       await tester.pumpAndSettle();

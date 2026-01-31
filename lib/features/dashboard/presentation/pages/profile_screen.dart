@@ -27,17 +27,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final userSessionService = ref.read(userSessionServiceProvider);
-    _nameController = TextEditingController(
-      text: userSessionService.getCurrentUserFullName() ?? '',
-    );
-    _emailController = TextEditingController(
-      text: userSessionService.getCurrentUserEmail() ?? '',
-    );
-    _phoneController = TextEditingController(
-      text: userSessionService.getCurrentUserPhoneNumber() ?? '',
-    );
+    _nameController = TextEditingController();
+    _emailController = TextEditingController();
+    _phoneController = TextEditingController();
     _loadNotificationPreference();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userSessionService = ref.read(userSessionServiceProvider);
+    _nameController.text = userSessionService.getCurrentUserFullName() ?? '';
+    _emailController.text = userSessionService.getCurrentUserEmail() ?? '';
+    _phoneController.text =
+        userSessionService.getCurrentUserPhoneNumber() ?? '';
   }
 
   Future<void> _loadNotificationPreference() async {
@@ -179,7 +182,80 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _pickProfileImage() async {
-    // Show dialog to choose between camera and gallery
+    try {
+      // Check current permission statuses
+      final cameraStatus = await Permission.camera.status;
+      final photosStatus = await Permission.photos.status;
+      final storageStatus = await Permission.storage.status;
+
+      print('📸 Checking permissions before showing source dialog...');
+      print('📸 Camera status: $cameraStatus');
+      print('📸 Photos status: $photosStatus');
+      print('📸 Storage status: $storageStatus');
+
+      // Request camera permission if not granted
+      if (!cameraStatus.isGranted) {
+        print('📸 Requesting camera permission...');
+        final cameraResult = await Permission.camera.request();
+        if (!cameraResult.isGranted) {
+          print('❌ Camera permission denied');
+          if (cameraResult.isPermanentlyDenied) {
+            _showGoToSettingsDialog();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Camera permission is required to take photos'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      // Request gallery permissions if not granted
+      if (!photosStatus.isGranted && !storageStatus.isGranted) {
+        print('📸 Requesting gallery permissions...');
+        final photosResult = await Permission.photos.request();
+        PermissionStatus galleryResult = photosResult;
+
+        if (!photosResult.isGranted) {
+          galleryResult = await Permission.storage.request();
+        }
+
+        if (!galleryResult.isGranted) {
+          print('❌ Gallery permissions denied');
+          if (galleryResult.isPermanentlyDenied) {
+            _showGoToSettingsDialogForGallery();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Gallery permission is required to select photos',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      // Permissions granted, show source selection dialog
+      print('✅ All permissions granted, showing source dialog');
+      _showImageSourceDialog();
+    } catch (e) {
+      print('❌ Error requesting permissions: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error accessing permissions: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showImageSourceDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
@@ -206,138 +282,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _pickFromGallery() async {
-    final XFile? pickedFile = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-
-    if (pickedFile != null) {
-      final file = File(pickedFile.path);
-      print('✅ Image picked from gallery: ${file.path}');
-      print('✅ File exists: ${await file.exists()}');
-      print('✅ File size: ${await file.length()} bytes');
-
-      setState(() {
-        _profileImage = file;
-      });
-    }
-  }
-
-  Future<void> _pickFromCamera() async {
     try {
-      // Check current permission status
-      final cameraStatus = await Permission.camera.status;
-
-      print('📸 Camera permission status: $cameraStatus');
-
-      // If already granted, proceed to pick image
-      if (cameraStatus.isGranted) {
-        _openCameraPicker();
-        return;
-      }
-
-      // If permission is restricted or denied, request it
-      if (cameraStatus.isDenied) {
-        print('📸 Camera permission denied, requesting...');
-        _showCameraPermissionDialog();
-        return;
-      }
-
-      // If permission is permanently denied
-      if (cameraStatus.isPermanentlyDenied) {
-        print('📸 Camera permission permanently denied');
-        _showGoToSettingsDialog();
-        return;
-      }
-
-      // If permission is restricted
-      if (cameraStatus.isRestricted) {
-        print('📸 Camera permission restricted');
-        _showGoToSettingsDialog();
-        return;
-      }
+      print('📸 Opening gallery picker...');
+      _openGalleryPicker();
     } catch (e) {
-      print('❌ Error checking camera permission: $e');
+      print('❌ Error accessing gallery: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error accessing camera: $e'),
+          content: Text('Error accessing gallery: $e'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
 
-  Future<void> _showCameraPermissionDialog() async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Camera Permission'),
-        content: const Text(
-          'This app needs access to your camera to take photos. How would you like to proceed?',
+  Future<void> _pickFromCamera() async {
+    try {
+      print('📸 Opening camera picker...');
+      _openCameraPicker();
+    } catch (e) {
+      print('❌ Error accessing camera: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error accessing camera: $e'),
+          backgroundColor: Colors.red,
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('Don\'t Allow'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _requestCameraPermissionOnce();
-            },
-            child: const Text('Only this time'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _requestCameraPermissionAlways();
-            },
-            child: const Text('Always Allow'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _requestCameraPermissionOnce() async {
-    try {
-      final status = await Permission.camera.request();
-      print('📸 Permission request result: $status');
-
-      if (status.isGranted) {
-        print('✅ Camera permission granted');
-        _openCameraPicker();
-      } else if (status.isDenied) {
-        print('❌ Camera permission denied by user');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Camera permission is required to take photos'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      print('❌ Error requesting camera permission: $e');
-    }
-  }
-
-  Future<void> _requestCameraPermissionAlways() async {
-    try {
-      final status = await Permission.camera.request();
-      print('📸 Permission request result: $status');
-
-      if (status.isGranted) {
-        print('✅ Camera permission granted');
-        _openCameraPicker();
-      } else if (status.isPermanentlyDenied) {
-        print('❌ Camera permission permanently denied');
-        _showGoToSettingsDialog();
-      }
-    } catch (e) {
-      print('❌ Error requesting camera permission: $e');
+      );
     }
   }
 
@@ -366,6 +336,51 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         title: const Text('Camera Permission Denied'),
         content: const Text(
           'Camera permission has been permanently denied. Please enable it in your app settings to use the camera.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(context);
+            },
+            child: const Text('Go to Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openGalleryPicker() async {
+    final XFile? pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      final file = File(pickedFile.path);
+      print('✅ Image picked from gallery: ${file.path}');
+      print('✅ File exists: ${await file.exists()}');
+      print('✅ File size: ${await file.length()} bytes');
+
+      setState(() {
+        _profileImage = file;
+      });
+    }
+  }
+
+  void _showGoToSettingsDialogForGallery() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Gallery Permission Denied'),
+        content: const Text(
+          'Gallery permission has been permanently denied. Please enable it in your app settings to select photos from gallery.',
         ),
         actions: [
           TextButton(

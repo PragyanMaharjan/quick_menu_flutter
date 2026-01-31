@@ -2,16 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:quick_menu/features/auth/presentation/pages/sigup_screen.dart';
 import 'package:quick_menu/core/services/storage/user_session_service.dart';
+import 'dart:io';
+
+import 'package:quick_menu/features/auth/data/models/auth_hive_model.dart';
 
 void main() {
   group('SignupScreen Widget Tests', () {
     late SharedPreferences sharedPreferences;
 
     setUp(() async {
+      // Initialize Hive for testing
+      final tempDir = await Directory.systemTemp.createTemp('hive_test');
+      Hive.init(tempDir.path);
+
+      // Register adapters only if not already registered
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(AuthHiveModelAdapter());
+      }
+
       SharedPreferences.setMockInitialValues({});
       sharedPreferences = await SharedPreferences.getInstance();
+    });
+
+    tearDown(() async {
+      await Hive.close();
     });
 
     Widget createWidgetUnderTest() {
@@ -55,7 +73,7 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('Sign up'), findsWidgets);
+      expect(find.text('Sign Up'), findsWidgets);
     });
 
     testWidgets('SignupScreen displays login link', (
@@ -64,7 +82,7 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('Log in'), findsWidgets);
+      expect(find.text('Already have an account? Login'), findsWidgets);
     });
 
     testWidgets('SignupScreen has scrollable content', (
