@@ -10,7 +10,12 @@ void main() {
     late SharedPreferences sharedPreferences;
 
     setUp(() async {
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({
+        'is_logged_in': true,
+        'user_full_name': 'Test User',
+        'user_email': 'test@example.com',
+        'user_phone_number': '1234567890',
+      });
       sharedPreferences = await SharedPreferences.getInstance();
     });
 
@@ -19,7 +24,7 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(sharedPreferences),
         ],
-        child: const MaterialApp(home: ProfileScreen()),
+        child: MaterialApp(home: Scaffold(body: ProfileScreen())),
       );
     }
 
@@ -186,9 +191,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Act
-      await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: ProfileScreen())),
-      );
+      await tester.pumpWidget(createWidgetUnderTest());
 
       // Assert - Should have containers for profile display
       expect(find.byType(Container), findsWidgets);
