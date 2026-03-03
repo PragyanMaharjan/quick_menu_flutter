@@ -1,17 +1,31 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+
 class ApiEndpoints {
   ApiEndpoints._();
 
-  // Base URL - change this for production
-  static const String baseUrl = 'http://10.0.2.2:3000/quickScan';
-  //static const String baseUrl = 'http://localhost:3000/quickScan';
-  //static const String baseUrl = 'http://192.168.1.xxx:3000/quickScan'; // Replace xxx with your IP
-  // For Android Emulator use: 'http://10.0.2.2:3000/quickScan'
-  // For iOS Simulator use: 'http://localhost:3000/quickScan'
-  // For Physical Device use your computer's IP: 'http://192.168.x.x:3000/quickScan'
-  // For Windows Desktop use: 'http://localhost:3000/quickScan'
+  // Configuration
+  static const bool isPhysicalDevice = true;
+  static const String _ipAddress = '192.168.137.1';
+  static const String _apiPath = '/quickScan';
+  static const int _port = 5000;
 
-  static const Duration connectionTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  // Base URLs - Dynamic host selection based on platform
+  static String get _host {
+    if (isPhysicalDevice) return _ipAddress;
+    if (kIsWeb || Platform.isIOS) return 'localhost';
+    if (Platform.isAndroid) return '10.0.2.2';
+    return 'localhost';
+  }
+
+  static String get serverUrl => 'http://$_host:$_port';
+  static String get baseUrl => '$serverUrl$_apiPath';
+  static String get mediaServerUrl => serverUrl;
+
+  // Timeouts
+  static const Duration connectionTimeout = Duration(seconds: 15);
+  static const Duration receiveTimeout = Duration(seconds: 20);
 
   // // ============ Batch Endpoints ============
   // static const String batches = '/batches';
@@ -26,6 +40,12 @@ class ApiEndpoints {
   static const String customerLogin = '/customers/login';
   static const String customerRegister = '/customers/signup';
   // static String customerById(String id) => '/customers/$id';
+
+  // ============ Order Endpoints ============
+  static const String submitOrder = '/orders';
+  static const String orderHistory = '/orders/history';
+  // static String orderById(String id) => '/orders/$id';
+
   // // ============ Item Endpoints ============
   // static const String items = '/items';
   // static String itemById(String id) => '/items/$id';

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/snackbar_utils.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quick_menu/core/providers/cart_provider.dart';
+import 'package:quick_menu/features/payment/data/repositories/order_repository_impl.dart';
 
-class PaymentPage extends StatefulWidget {
+class PaymentPage extends ConsumerStatefulWidget {
   final OrderItem order;
 
   const PaymentPage({super.key, required this.order});
 
   @override
-  State<PaymentPage> createState() => _PaymentPageState();
+  ConsumerState<PaymentPage> createState() => _PaymentPageState();
 }
 
-class _PaymentPageState extends State<PaymentPage> {
+class _PaymentPageState extends ConsumerState<PaymentPage> {
   String selectedPaymentMethod = 'card';
   bool isProcessing = false;
 
@@ -135,22 +138,28 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                   const SizedBox(height: 12),
                   _buildPaymentOption(
+                    'esewa',
+                    '💰',
+                    'eSewa',
+                    'Digital wallet payment',
+                  ),
+                  _buildPaymentOption(
+                    'khalti',
+                    '📱',
+                    'Khalti',
+                    'Quick digital payment',
+                  ),
+                  _buildPaymentOption(
                     'card',
                     '💳',
                     'Credit/Debit Card',
-                    'Visa, Mastercard, RuPay',
+                    'Visa, Mastercard',
                   ),
                   _buildPaymentOption(
-                    'upi',
-                    '📱',
-                    'UPI',
-                    'Google Pay, PhonePe, PayTM',
-                  ),
-                  _buildPaymentOption(
-                    'wallet',
-                    '👛',
-                    'Digital Wallet',
-                    'PayTM, MobiKwik',
+                    'cash',
+                    '💵',
+                    'Cash Payment',
+                    'Pay at counter',
                   ),
                 ],
               ),
@@ -203,18 +212,17 @@ class _PaymentPageState extends State<PaymentPage> {
     String title,
     String subtitle,
   ) {
+    final isSelected = selectedPaymentMethod == value;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: selectedPaymentMethod == value
-            ? const Color(0xFFE05757).withOpacity(0.1)
+        color: isSelected
+            ? const Color(0xFFE05757).withValues(alpha: 0.1)
             : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: selectedPaymentMethod == value
-              ? const Color(0xFFE05757)
-              : Colors.grey.shade200,
-          width: selectedPaymentMethod == value ? 2 : 1,
+          color: isSelected ? const Color(0xFFE05757) : Colors.grey.shade200,
+          width: isSelected ? 2 : 1,
         ),
       ),
       child: Material(
@@ -249,12 +257,27 @@ class _PaymentPageState extends State<PaymentPage> {
                     ],
                   ),
                 ),
-                Radio<String>(
-                  value: value,
-                  groupValue: selectedPaymentMethod,
-                  onChanged: (val) =>
-                      setState(() => selectedPaymentMethod = val!),
-                  activeColor: const Color(0xFFE05757),
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFFE05757)
+                          : Colors.grey.shade400,
+                      width: 2,
+                    ),
+                  ),
+                  child: isSelected
+                      ? Container(
+                          margin: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFFE05757),
+                          ),
+                        )
+                      : null,
                 ),
               ],
             ),
@@ -265,34 +288,237 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   void _processPayment() async {
+    // Special handling for cash payment
+    if (selectedPaymentMethod == 'cash') {
+      _showCashPaymentDialog();
+      return;
+    }
+
     setState(() => isProcessing = true);
 
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Convert OrderItem to the format expected by repository
+      final orderItems = widget.order.items.map((item) {
+        return {
+          'name': item.name,
+          'quantity': item.quantity,
+          'price': item.price,
+        };
+      }).toList();
 
-    if (mounted) {
-      setState(() => isProcessing = false);
-      SnackBarUtils.showSnackBar(
-        context,
-        'Payment successful via ${_getPaymentMethodName(selectedPaymentMethod)}!',
+      // Submit order using offline-first repository
+      final orderRepository = ref.read(orderRepositoryProvider);
+      final result = await orderRepository.submitOrder(
+        orderItems,
+        widget.order.totalAmount,
       );
-      Future.delayed(const Duration(seconds: 1), () {
-        Navigator.pop(context);
-        Navigator.pushNamed(context, '/thank-you', arguments: widget.order);
-      });
+
+      await result.fold(
+        (failure) {
+          // Handle failure
+          SnackBarUtils.showSnackBar(
+            context,
+            'Order saved locally. Will sync when online.',
+          );
+        },
+        (order) {
+          // Handle success
+          final paymentMethodName = selectedPaymentMethod == 'esewa'
+              ? 'eSewa'
+              : selectedPaymentMethod == 'khalti'
+              ? 'Khalti'
+              : 'Card';
+          SnackBarUtils.showSnackBar(
+            context,
+            'Payment via $paymentMethodName successful! Order ${order.isSynced ? 'submitted' : 'saved locally'}.',
+          );
+        },
+      );
+
+      // Clear cart after successful order
+      _clearCart();
+
+      // Navigate to thank you page
+      if (mounted) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/thank-you', arguments: widget.order);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarUtils.showSnackBar(
+          context,
+          'Payment failed. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isProcessing = false);
+      }
     }
   }
 
-  String _getPaymentMethodName(String method) {
-    switch (method) {
-      case 'card':
-        return 'Card';
-      case 'upi':
-        return 'UPI';
-      case 'wallet':
-        return 'Wallet';
-      default:
-        return 'Payment';
+  void _showCashPaymentDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(children: [const Text('💵 '), const Text('Cash Payment')]),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Please proceed to the counter to complete your cash payment.',
+                style: TextStyle(fontSize: 15),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total Amount',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Rs. ${widget.order.totalAmount}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFE05757),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Colors.blue.shade700,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Your order will be confirmed at the counter',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE05757),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                // Submit order and clear cart
+                await _submitCashOrder();
+              },
+              child: const Text(
+                'Confirm',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitCashOrder() async {
+    setState(() => isProcessing = true);
+
+    try {
+      final orderItems = widget.order.items.map((item) {
+        return {
+          'name': item.name,
+          'quantity': item.quantity,
+          'price': item.price,
+        };
+      }).toList();
+
+      final orderRepository = ref.read(orderRepositoryProvider);
+      final result = await orderRepository.submitOrder(
+        orderItems,
+        widget.order.totalAmount,
+      );
+
+      await result.fold(
+        (failure) {
+          SnackBarUtils.showSnackBar(
+            context,
+            'Order saved. Please pay at counter.',
+          );
+        },
+        (order) {
+          SnackBarUtils.showSnackBar(
+            context,
+            'Order confirmed! Please pay Rs. ${widget.order.totalAmount} at counter.',
+          );
+        },
+      );
+
+      // Clear cart after successful order
+      _clearCart();
+
+      if (mounted) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/thank-you', arguments: widget.order);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarUtils.showSnackBar(
+          context,
+          'Order submission failed. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isProcessing = false);
+      }
     }
+  }
+
+  void _clearCart() {
+    // Clear the cart using the cart provider
+    ref.read(cartProvider.notifier).clearCart();
   }
 }
 

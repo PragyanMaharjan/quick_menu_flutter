@@ -23,7 +23,7 @@ class OrderScreen extends ConsumerWidget {
           // Modern Header
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
             decoration: BoxDecoration(
               gradient: AppGradients.headerGradient,
               borderRadius: const BorderRadius.only(
@@ -340,8 +340,21 @@ class OrderScreen extends ConsumerWidget {
               color: const Color(0xFFE05757).withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Center(
-              child: Text(item.icon, style: const TextStyle(fontSize: 28)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                item.icon,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(
+                      Icons.fastfood,
+                      size: 28,
+                      color: Color(0xFFE05757),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(width: 12),

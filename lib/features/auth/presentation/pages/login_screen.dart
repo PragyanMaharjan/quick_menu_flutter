@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quick_menu/core/widgets/mybutton.dart';
 import 'package:quick_menu/core/widgets/mytextfield.dart';
 import 'package:quick_menu/core/utils/snackbar_utils.dart';
+import 'package:quick_menu/core/services/biometric_auth_service.dart';
 import '../view_model/auth_view_model.dart';
 import '../state/auth_state.dart';
 import 'sigup_screen.dart';
@@ -19,6 +20,96 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController mail = TextEditingController();
   final TextEditingController pass = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricAvailability();
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    print('🔑 Login: Checking biometric availability...');
+    final biometricService = ref.read(biometricAuthServiceProvider);
+    final isSupported = await biometricService.isBiometricSupported();
+    final isEnabled = await biometricService.isBiometricEnabled();
+    final hasCredentials = await biometricService.hasStoredCredentials();
+
+    print(
+      '🔑 Login: Supported=$isSupported, Enabled=$isEnabled, HasCredentials=$hasCredentials',
+    );
+
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = isSupported;
+        _biometricEnabled = isEnabled && hasCredentials;
+      });
+
+      print(
+        '🔑 Login: Final _biometricAvailable=$_biometricAvailable, _biometricEnabled=$_biometricEnabled',
+      );
+
+      // Auto-trigger biometric login if enabled and has credentials
+      if (_biometricEnabled && hasCredentials) {
+        print('🔑 Login: Auto-triggering biometric login...');
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) _handleBiometricLogin();
+        });
+      }
+    }
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    print('🔑 Login: Starting biometric login...');
+    final biometricService = ref.read(biometricAuthServiceProvider);
+
+    try {
+      final credentials = await biometricService.loginWithBiometric();
+
+      print('🔑 Login: Credentials retrieved: ${credentials != null}');
+
+      if (credentials != null) {
+        print('🔑 Login: Logging in with retrieved credentials...');
+        // Login with retrieved credentials
+        await ref
+            .read(authViewModelProvider.notifier)
+            .login(
+              email: credentials['email']!,
+              password: credentials['password']!,
+            );
+
+        final authState = ref.read(authViewModelProvider);
+        print('🔑 Login: Auth state: ${authState.status}');
+
+        if (authState.status == AuthStatus.authenticated) {
+          print('✅ Login: Biometric login successful!');
+          if (mounted) {
+            SnackBarUtils.success(context, "Biometric login successful!");
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const DashboardScreen()),
+            );
+          }
+        } else if (authState.status == AuthStatus.error) {
+          print('❌ Login: Auth error: ${authState.errorMessage}');
+          if (mounted) {
+            SnackBarUtils.error(
+              context,
+              authState.errorMessage ?? "Login failed",
+            );
+          }
+        }
+      } else {
+        print('⚠️ Login: No credentials returned from biometric service');
+      }
+    } catch (e) {
+      print('❌ Login: Error during biometric login: $e');
+      if (mounted) {
+        SnackBarUtils.error(context, "Biometric login failed: $e");
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -100,6 +191,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     text: isLoading ? "Logging in..." : "Log In",
                     buttonColor: Colors.red.shade700,
                   ),
+                  if (_biometricAvailable && _biometricEnabled) ...[
+                    const SizedBox(height: 20),
+                    const Text(
+                      "OR",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: isLoading ? null : _handleBiometricLogin,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.red.shade700,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.shade100,
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.fingerprint,
+                              color: Colors.red.shade700,
+                              size: 32,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              "Login with Fingerprint",
+                              style: TextStyle(
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 25),
                   GestureDetector(
                     onTap: () {

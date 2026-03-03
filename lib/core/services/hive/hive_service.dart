@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:quick_menu/core/constants/hive_table_constants.dart';
 import 'package:quick_menu/features/auth/data/models/auth_hive_model.dart';
+import 'package:quick_menu/features/payment/data/models/order_hive_model.dart';
 
 final hiveServiceProvider = Provider<HiveService>((ref) {
   final service = HiveService();
@@ -24,11 +25,24 @@ class HiveService {
     if (!Hive.isAdapterRegistered(HiveTableConstants.authTypeId)) {
       Hive.registerAdapter(AuthHiveModelAdapter());
     }
+    if (!Hive.isAdapterRegistered(2)) {
+      // OrderHiveModel typeId
+      Hive.registerAdapter(OrderHiveModelAdapter());
+    }
   }
 
   Future<void> openboxes() async {
     if (!Hive.isBoxOpen(HiveTableConstants.authTable)) {
       await Hive.openBox<AuthHiveModel>(HiveTableConstants.authTable);
+    }
+    if (!Hive.isBoxOpen('orders')) {
+      await Hive.openBox<OrderHiveModel>('orders');
+    }
+    if (!Hive.isBoxOpen('cart_items')) {
+      await Hive.openBox<List<dynamic>>('cart_items');
+    }
+    if (!Hive.isBoxOpen('favorites')) {
+      await Hive.openBox<List<dynamic>>('favorites');
     }
   }
 

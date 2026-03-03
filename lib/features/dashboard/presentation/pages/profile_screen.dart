@@ -3,9 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../auth/presentation/pages/login_screen.dart';
 import 'package:quick_menu/core/services/storage/user_session_service.dart';
 import 'package:quick_menu/features/auth/domain/usecases/upload_user_photo_usecase.dart';
+import 'package:quick_menu/features/payment/presentation/pages/order_history_screen.dart';
+import 'package:quick_menu/features/offers/presentation/pages/special_offers_screen.dart';
+import 'package:quick_menu/core/services/biometric_auth_service.dart';
+import 'package:quick_menu/core/api/api_endpoint.dart';
 import 'about_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -22,6 +27,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   File? _profileImage;
   bool _isEditing = false;
   bool _notificationsEnabled = true;
+  bool _biometricEnabled = false;
+  bool _biometricSupported = false;
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
@@ -31,6 +38,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
     _loadNotificationPreference();
+    _checkBiometricSupport();
   }
 
   @override
@@ -117,6 +125,252 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  /// Check if biometric is supported on device
+  Future<void> _checkBiometricSupport() async {
+    print('👤 Profile: Checking biometric support...');
+    final biometricService = ref.read(biometricAuthServiceProvider);
+    final isSupported = await biometricService.isBiometricSupported();
+    final isEnabled = await biometricService.isBiometricEnabled();
+
+    print('👤 Profile: Supported=$isSupported, Enabled=$isEnabled');
+
+    if (mounted) {
+      setState(() {
+        _biometricSupported = isSupported;
+        _biometricEnabled = isEnabled;
+      });
+    }
+  }
+
+  /// Toggle biometric authentication
+  Future<void> _toggleBiometric(bool value) async {
+    print('👤 Profile: Toggle biometric to: $value');
+    final biometricService = ref.read(biometricAuthServiceProvider);
+    final userSessionService = ref.read(userSessionServiceProvider);
+
+    if (value) {
+      // Enable biometric - need credentials
+      final email = userSessionService.getCurrentUserEmail();
+      print('👤 Profile: User email: ${email?.substring(0, 3)}...');
+
+      if (email == null || email.isEmpty) {
+        print('❌ Profile: No email found in session');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to enable biometric. Please login again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Show dialog to get password
+      print('👤 Profile: Showing password dialog...');
+      _showPasswordDialogForBiometric(email);
+    } else {
+      // Disable biometric
+      print('👤 Profile: Disabling biometric...');
+      final success = await biometricService.disableBiometric();
+
+      print('👤 Profile: Disable result: $success');
+
+      if (mounted) {
+        setState(() {
+          _biometricEnabled = success ? false : _biometricEnabled;
+        });
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Biometric login disabled'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  /// Show dialog to enter password for enabling biometric
+  void _showPasswordDialogForBiometric(String email) {
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Enable Biometric Login'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter your password to enable fingerprint login:',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              passwordController.dispose();
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final password = passwordController.text;
+
+              if (password.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter your password'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              print('👤 Profile: Password entered, closing dialog...');
+              // Close dialog first
+              Navigator.pop(context);
+
+              // Show loading indicator
+              if (mounted) {
+                print('👤 Profile: Showing loading indicator...');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Text('Setting up biometric...'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 10),
+                  ),
+                );
+              }
+
+              // Enable biometric with credentials
+              print('👤 Profile: Calling enableBiometric...');
+              final biometricService = ref.read(biometricAuthServiceProvider);
+
+              // First check if biometric is properly enrolled
+              final availableBiometrics = await biometricService
+                  .getAvailableBiometrics();
+              print('👤 Profile: Available biometrics: $availableBiometrics');
+
+              if (availableBiometrics.isEmpty) {
+                print('❌ Profile: No biometrics enrolled');
+                passwordController.dispose();
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        '⚠️ No fingerprint enrolled!\n\n'
+                        'Steps to add:\n'
+                        '1. Open Settings\n'
+                        '2. Security → Fingerprint\n'
+                        '3. Add your fingerprint\n'
+                        '4. Return and try again',
+                      ),
+                      backgroundColor: Colors.orange,
+                      duration: Duration(seconds: 8),
+                    ),
+                  );
+                }
+                return;
+              }
+
+              // Test biometric before enabling
+              print('👤 Profile: Testing biometric first...');
+              final testResult = await biometricService.testBiometric();
+              print('👤 Profile: Test result: $testResult');
+
+              if (!testResult) {
+                print('❌ Profile: Biometric test failed');
+                passwordController.dispose();
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        '❌ Fingerprint test failed!\n\n'
+                        'Troubleshooting:\n'
+                        '• Clean your fingerprint sensor\n'
+                        '• Wipe your finger dry\n'
+                        '• Try different finger\n'
+                        '• Check Settings → Security → Fingerprint works',
+                      ),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 8),
+                    ),
+                  );
+                }
+                return;
+              }
+
+              // Now enable biometric
+              final success = await biometricService.enableBiometric(
+                email: email,
+                password: password,
+              );
+
+              print('👤 Profile: Enable result: $success');
+              passwordController.dispose();
+
+              if (mounted) {
+                setState(() {
+                  _biometricEnabled = success;
+                });
+
+                // Show result message
+                print('👤 Profile: Showing result message...');
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? '✓ Biometric login enabled!\n\nYou can now login with fingerprint'
+                          : '❌ Setup incomplete!\n\nThe fingerprint test worked but setup failed.\nPlease try again.',
+                    ),
+                    backgroundColor: success ? Colors.green : Colors.orange,
+                    duration: Duration(seconds: success ? 4 : 7),
+                  ),
+                );
+              }
+            },
+            child: const Text('Enable'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -128,11 +382,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// Constructs the full backend URL for the profile picture
   /// Handles URL encoding and cache busting
   String _constructProfileImageUrl(String photoPath) {
-    // Backend base URL - adjust based on your environment
-    // For Android Emulator: http://10.0.2.2:3000
-    // For iOS Simulator: http://localhost:3000
-    // For physical device: http://<your-machine-ip>:3000
-    const String backendBaseUrl = 'http://10.0.2.2:3000';
+    // Use dynamic server URL from ApiEndpoints
+    final String backendBaseUrl = ApiEndpoints.serverUrl;
 
     print('📸 Input photoPath: $photoPath');
 
@@ -147,6 +398,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (cleanPath.startsWith('/public/')) {
       cleanPath = cleanPath.replaceFirst('/public/', '/');
       print('📸 Removed /public/ prefix: $cleanPath');
+    }
+
+    // Ensure cleanPath starts with /
+    if (!cleanPath.startsWith('/')) {
+      cleanPath = '/$cleanPath';
+      print('📸 Added leading slash: $cleanPath');
     }
 
     // Construct full URL from relative path
@@ -166,6 +423,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userSessionService = ref.read(userSessionServiceProvider);
     final photoUrl = userSessionService.getCurrentUserPhotoUrl();
 
+    print('🖼️ Building profile image provider');
+    print('🖼️ PhotoUrl from session: $photoUrl');
+
     // Show placeholder if no profile picture
     if (photoUrl == null || photoUrl.isEmpty) {
       print('⚠️ No profile picture URL found, showing placeholder');
@@ -174,7 +434,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     try {
       final fullUrl = _constructProfileImageUrl(photoUrl);
-      return NetworkImage(fullUrl);
+      print('🖼️ Full constructed URL: $fullUrl');
+
+      // Add timestamp to bust cache
+      final cacheBustedUrl =
+          '$fullUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+      print('🖼️ Cache-busted URL: $cacheBustedUrl');
+
+      return CachedNetworkImageProvider(cacheBustedUrl);
     } catch (e) {
       print('❌ Error constructing image URL: $e');
       return const AssetImage('assets/image/background.jpg');
@@ -427,6 +694,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               (r) => r,
             );
             final photoUrl = updatedUser?.photoUrl;
+
+            print('📸 Photo upload successful!');
+            print('📸 Updated photo URL: $photoUrl');
+
             // Photo uploaded successfully, save to session
             await userSessionService.saveUserSession(
               userId: userId,
@@ -446,10 +717,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _profileImage = null;
               });
 
+              // Force rebuild after a short delay to ensure cache is cleared
+              await Future.delayed(const Duration(milliseconds: 300));
+              if (mounted) {
+                setState(() {});
+                print('📸 Profile rebuilt with new photo');
+              }
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Profile updated successfully'),
                   backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
                 ),
               );
             }
@@ -574,6 +853,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     Stack(
                       children: [
                         CircleAvatar(
+                          key: ValueKey(
+                            userSessionService.getCurrentUserPhotoUrl(),
+                          ),
                           radius: 48,
                           backgroundColor: Colors.white.withOpacity(0.3),
                           child: _profileImage != null
@@ -820,7 +1102,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "⚙️ Preferences",
+                      "⚙️ Preferences & More",
                       style: TextStyle(
                         fontFamily: 'OpenSans',
                         fontSize: 16,
@@ -828,6 +1110,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SpecialOffersScreen(),
+                          ),
+                        );
+                      },
+                      child: _SettingsTile(
+                        icon: Icons.local_offer,
+                        label: "Special Offers",
+                        emoji: "🎉",
+                        trailing: const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     _SettingsTile(
                       icon: Icons.notifications,
                       label: "Notifications",
@@ -838,6 +1141,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         activeThumbColor: Colors.green,
                       ),
                     ),
+                    if (_biometricSupported) ...[
+                      const SizedBox(height: 10),
+                      _SettingsTile(
+                        icon: Icons.fingerprint,
+                        label: "Biometric Login",
+                        emoji: "🔐",
+                        trailing: Switch(
+                          value: _biometricEnabled,
+                          onChanged: _toggleBiometric,
+                          activeThumbColor: Colors.green,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     _SettingsTile(
                       icon: Icons.card_giftcard,
@@ -858,7 +1174,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
               const SizedBox(height: 20),
 
-              // 📞 SUPPORT & HELP
+              // � ORDER HISTORY
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "📜 Orders",
+                      style: TextStyle(
+                        fontFamily: 'OpenSans',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const OrderHistoryScreen(),
+                          ),
+                        );
+                      },
+                      child: _SettingsTile(
+                        icon: Icons.receipt_long,
+                        label: "Order History",
+                        emoji: "📋",
+                        trailing: const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // �📞 SUPPORT & HELP
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(

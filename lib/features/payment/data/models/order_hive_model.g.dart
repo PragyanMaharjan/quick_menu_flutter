@@ -1,47 +1,49 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'auth_hive_model.dart';
+part of 'order_hive_model.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class AuthHiveModelAdapter extends TypeAdapter<AuthHiveModel> {
+class OrderHiveModelAdapter extends TypeAdapter<OrderHiveModel> {
   @override
-  final int typeId = 0;
+  final int typeId = 2;
 
   @override
-  AuthHiveModel read(BinaryReader reader) {
+  OrderHiveModel read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return AuthHiveModel(
-      authId: fields[0] as String,
-      fullName: fields[1] as String,
-      email: fields[2] as String,
-      phoneNumber: fields[3] as String,
-      password: fields[4] as String,
-      photoUrl: fields[5] as String?,
+    return OrderHiveModel(
+      orderId: fields[0] as String,
+      items: (fields[1] as List)
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
+      totalAmount: fields[2] as double,
+      status: fields[3] as String,
+      orderDate: fields[4] as DateTime,
+      isSynced: fields[5] as bool,
     );
   }
 
   @override
-  void write(BinaryWriter writer, AuthHiveModel obj) {
+  void write(BinaryWriter writer, OrderHiveModel obj) {
     writer
       ..writeByte(6)
       ..writeByte(0)
-      ..write(obj.authId)
+      ..write(obj.orderId)
       ..writeByte(1)
-      ..write(obj.fullName)
+      ..write(obj.items)
       ..writeByte(2)
-      ..write(obj.email)
+      ..write(obj.totalAmount)
       ..writeByte(3)
-      ..write(obj.phoneNumber)
+      ..write(obj.status)
       ..writeByte(4)
-      ..write(obj.password)
+      ..write(obj.orderDate)
       ..writeByte(5)
-      ..write(obj.photoUrl);
+      ..write(obj.isSynced);
   }
 
   @override
@@ -50,7 +52,7 @@ class AuthHiveModelAdapter extends TypeAdapter<AuthHiveModel> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AuthHiveModelAdapter &&
+      other is OrderHiveModelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

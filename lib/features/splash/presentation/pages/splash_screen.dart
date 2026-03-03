@@ -22,9 +22,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   void _checkLoginStatus() async {
-    if (Platform.environment['FLUTTER_TEST'] != 'true') {
-      await Future.delayed(const Duration(seconds: 3));
-    }
     if (!mounted) return;
 
     final userSessionService = ref.read(userSessionServiceProvider);

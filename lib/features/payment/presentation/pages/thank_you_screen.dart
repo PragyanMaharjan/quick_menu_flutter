@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:quick_menu/features/dashboard/presentation/pages/home.dart';
 
-class ThankYouScreen extends StatelessWidget {
+class ThankYouScreen extends StatefulWidget {
   final dynamic order;
 
   const ThankYouScreen({super.key, this.order});
+
+  @override
+  State<ThankYouScreen> createState() => _ThankYouScreenState();
+}
+
+class _ThankYouScreenState extends State<ThankYouScreen> {
+  int _rating = 0;
+  bool _hasRated = false;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +75,7 @@ class ThankYouScreen extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   // Order Details Card
-                  if (order != null)
+                  if (widget.order != null)
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -97,7 +105,7 @@ class ThankYouScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                order.id ?? 'N/A',
+                                widget.order.id ?? 'N/A',
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -117,7 +125,7 @@ class ThankYouScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'Rs. ${order.totalAmount ?? 0}',
+                                'Rs. ${widget.order.totalAmount ?? 0}',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -138,13 +146,126 @@ class ThankYouScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '${order.items?.length ?? 0} items',
+                                '${widget.order.items?.length ?? 0} items',
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 32),
+
+                  // Rating Section
+                  if (!_hasRated)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Rate Your Experience',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(5, (index) {
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _rating = index + 1;
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
+                                  child: Icon(
+                                    index < _rating
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: const Color(0xFFF7971E),
+                                    size: 36,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                          if (_rating > 0) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE05757),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _hasRated = true;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Thank you for your feedback!',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Submit Rating',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: Colors.green.shade700,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Thank you for rating us $_rating star${_rating > 1 ? 's' : ''}!',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
                           ),
                         ],
                       ),

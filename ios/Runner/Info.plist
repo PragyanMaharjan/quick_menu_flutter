@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMotionUsageDescription</key>
+	<string>This app uses accelerometer data to detect shake gestures for the call waiter feature.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app uses Face ID / Touch ID to securely authenticate and login to your account.</string>
 </dict>
 </plist>
