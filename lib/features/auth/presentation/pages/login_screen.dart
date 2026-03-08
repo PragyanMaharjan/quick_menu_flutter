@@ -93,10 +93,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         } else if (authState.status == AuthStatus.error) {
           print('❌ Login: Auth error: ${authState.errorMessage}');
+          final errorMessage = authState.errorMessage?.toLowerCase() ?? '';
+
+          // Stored biometric credentials can become stale if password changed.
+          if (errorMessage.contains('invalid credentials')) {
+            await biometricService.disableBiometric();
+            if (mounted) {
+              setState(() {
+                _biometricEnabled = false;
+              });
+            }
+          }
+
           if (mounted) {
             SnackBarUtils.error(
               context,
-              authState.errorMessage ?? "Login failed",
+              errorMessage.contains('invalid credentials')
+                  ? 'Saved biometric credentials are outdated. Please login manually once and re-enable biometric.'
+                  : authState.errorMessage ?? "Login failed",
             );
           }
         }

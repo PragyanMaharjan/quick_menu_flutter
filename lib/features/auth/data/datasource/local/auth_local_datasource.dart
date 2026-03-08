@@ -1,4 +1,3 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quick_menu/core/services/hive/hive_service.dart';
 import 'package:quick_menu/core/services/storage/user_session_service.dart';
@@ -14,8 +13,7 @@ final authLocalDatasourceProvider = Provider<AuthLocalDataSource>((ref) {
   );
 });
 
-class AuthLocalDataSource implements IAuthLocalDataSource{
-
+class AuthLocalDataSource implements IAuthLocalDataSource {
   final HiveService _hiveService;
   final UserSessionService _userSessionService;
 
@@ -29,7 +27,7 @@ class AuthLocalDataSource implements IAuthLocalDataSource{
   Future<AuthHiveModel> register(AuthHiveModel user) async {
     return await _hiveService.register(user);
   }
-      
+
   @override
   Future<AuthHiveModel?> getCurrentUser() async {
     try {
@@ -51,7 +49,6 @@ class AuthLocalDataSource implements IAuthLocalDataSource{
     }
   }
 
-
   @override
   Future<AuthHiveModel?> login(String email, String password) async {
     try {
@@ -66,9 +63,9 @@ class AuthLocalDataSource implements IAuthLocalDataSource{
         );
       }
       return user;
-      } catch (e) {
+    } catch (e) {
       return null;
-    } 
+    }
   }
 
   @override
@@ -80,7 +77,7 @@ class AuthLocalDataSource implements IAuthLocalDataSource{
       return Future.value(false);
     }
   }
-  
+
   @override
   Future<AuthHiveModel?> getUserByEmail(String email) async {
     try {

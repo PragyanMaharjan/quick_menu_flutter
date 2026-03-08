@@ -7,9 +7,9 @@ class ApiEndpoints {
 
   // Configuration
   static const bool isPhysicalDevice = true;
-  static const String _ipAddress = '192.168.137.1';
+  static const String _ipAddress = '192.168.1.8';
   static const String _apiPath = '/quickScan';
-  static const int _port = 5000;
+  static const int _port = 3000;
 
   // Base URLs - Dynamic host selection based on platform
   static String get _host {

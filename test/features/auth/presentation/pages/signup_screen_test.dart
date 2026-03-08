@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:quick_menu/features/auth/presentation/pages/sigup_screen.dart';
+import 'package:quick_menu/core/services/hive/hive_service.dart';
 import 'package:quick_menu/core/services/storage/user_session_service.dart';
 import 'dart:io';
 
@@ -23,6 +24,9 @@ void main() {
       if (!Hive.isAdapterRegistered(0)) {
         Hive.registerAdapter(AuthHiveModelAdapter());
       }
+
+      // Satisfy hiveServiceProvider dependency used by authViewModelProvider.
+      setHiveServiceInstance(HiveService());
 
       SharedPreferences.setMockInitialValues({});
       sharedPreferences = await SharedPreferences.getInstance();

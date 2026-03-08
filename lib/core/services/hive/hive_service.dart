@@ -5,13 +5,16 @@ import 'package:quick_menu/core/constants/hive_table_constants.dart';
 import 'package:quick_menu/features/auth/data/models/auth_hive_model.dart';
 import 'package:quick_menu/features/payment/data/models/order_hive_model.dart';
 
+late HiveService _hiveServiceInstance;
+
 final hiveServiceProvider = Provider<HiveService>((ref) {
-  final service = HiveService();
-  // trigger initialization (don't await here) so consumers can use the service
-  service.init();
-  service.openboxes();
-  return service;
+  return _hiveServiceInstance;
 });
+
+// Call this from main() after initializing HiveService
+void setHiveServiceInstance(HiveService service) {
+  _hiveServiceInstance = service;
+}
 
 class HiveService {
   Future<void> init() async {

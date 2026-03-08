@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:hive/hive.dart';
 import 'package:quick_menu/core/providers/cart_provider.dart';
 import 'package:quick_menu/core/theme/app_colors.dart';

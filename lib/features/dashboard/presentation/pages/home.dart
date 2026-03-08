@@ -40,16 +40,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Initialize shake detection service
   void _initializeShakeService() {
-    print('🔔 Initializing ShakeService...');
+    print('🔔 Initializing ShakeService with optimal thresholds...');
     _shakeService = ShakeService(
       onShakeDetected: _showCallWaiterDialog,
-      shakeThreshold: 2.5, // Lowered for testing
-      minimumShakeCount: 2,
-      shakeWindowMs: 750,
-      cooldownSeconds: 3,
+      shakeThreshold: 2.4, // Optimal: ~2.4 gForce for normal shakes
+      gForceDeltaThreshold: 0.7, // Optimal: ~0.7 for delta detection
+      minimumShakeCount: 2, // Number of shakes to detect
+      shakeWindowMs: 800, // Optimal: ~800ms time window
+      cooldownSeconds: 1, // Optimal: ~1 second cooldown
     );
     _shakeService!.startListening();
-    print('🔔 ShakeService initialized and listening');
+    print('✅ ShakeService initialized with optimal settings');
   }
 
   /// Show confirmation dialog before calling waiter
@@ -69,71 +70,85 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
-    print('✅ Showing call waiter dialog...');
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+    // Use WidgetsBinding to ensure dialog shows properly
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        print('⚠️ Widget no longer mounted when trying to show dialog');
+        return;
+      }
+
+      print('✅ Showing call waiter dialog...');
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.phone_in_talk,
+                    color: Colors.orange,
+                    size: 28,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.phone_in_talk,
-                  color: Colors.orange,
-                  size: 28,
+                const SizedBox(width: 12),
+                const Text(
+                  'Call Waiter?',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Do you want to call a waiter to your table?',
+              style: TextStyle(fontSize: 16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  print('❌ Dialog canceled');
+                },
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'Call Waiter?',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _callWaiter();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text(
+                  'Yes, Call',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
-          ),
-          content: const Text(
-            'Do you want to call a waiter to your table?',
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _callWaiter();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text(
-                'Yes, Call',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+          );
+        },
+      ).catchError((e) {
+        print('❌ Error showing dialog: $e');
+      });
+    });
   }
 
   /// Call waiter function - sends notification to staff
@@ -300,7 +315,7 @@ class FoodItem {
 class HomeTab extends ConsumerWidget {
   final VoidCallback? onCallWaiter;
 
-  HomeTab({super.key, this.onCallWaiter});
+  const HomeTab({super.key, this.onCallWaiter});
 
   static const List<FoodItem> items = [
     FoodItem(
@@ -550,40 +565,6 @@ class HomeTab extends ConsumerWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Test Button for Dialog (Debug only)
-            Container(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  print('🧪 ========================================');
-                  print('🧪 Test button pressed!');
-                  print('🧪 Checking onCallWaiter callback...');
-                  if (onCallWaiter != null) {
-                    print('🧪 ✅ Callback found! Calling it now...');
-                    onCallWaiter!();
-                    print('🧪 ✅ Callback executed successfully');
-                  } else {
-                    print('🧪 ❌ ERROR: onCallWaiter is NULL!');
-                    print('🧪 ❌ Did you do HOT RESTART (capital R)?');
-                    print('🧪 ❌ Hot reload (lowercase r) won\'t work!');
-                  }
-                  print('🧪 ========================================');
-                },
-                icon: const Icon(Icons.bug_report),
-                label: const Text('Test Call Waiter Dialog (Debug)'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.purple,
-                  side: const BorderSide(color: Colors.purple),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
               ),
             ),
 

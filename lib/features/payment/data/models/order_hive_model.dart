@@ -22,6 +22,12 @@ class OrderHiveModel {
   @HiveField(5)
   final bool isSynced;
 
+  @HiveField(6)
+  final String? tableId;
+
+  @HiveField(7)
+  final String? orderType;
+
   OrderHiveModel({
     required this.orderId,
     required this.items,
@@ -29,6 +35,8 @@ class OrderHiveModel {
     required this.status,
     required this.orderDate,
     this.isSynced = false,
+    this.tableId,
+    this.orderType,
   });
 
   // Convert to API format
@@ -39,6 +47,8 @@ class OrderHiveModel {
       'totalAmount': totalAmount,
       'status': status,
       'orderDate': orderDate.toIso8601String(),
+      if (tableId != null) 'tableId': tableId,
+      if (orderType != null) 'orderType': orderType,
     };
   }
 
@@ -53,6 +63,8 @@ class OrderHiveModel {
           ? DateTime.parse(json['orderDate'])
           : DateTime.now(),
       isSynced: true,
+      tableId: json['tableId'],
+      orderType: json['orderType'],
     );
   }
 }

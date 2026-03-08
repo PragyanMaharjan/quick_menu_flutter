@@ -16,16 +16,21 @@ class ShakeService {
   /// Callback triggered when deliberate shake is detected
   final VoidCallback onShakeDetected;
 
-  /// Shake threshold (2.8-3.0 for deliberate shakes only)
+  /// Shake threshold (gForce) - typically 2.4 for normal shakes
   final double shakeThreshold;
 
-  /// Minimum number of shakes required to trigger
+  /// Threshold for change in gForce (delta) between readings
+  /// Typically 0.5 to 1.0 - detects rapid acceleration changes
+  final double gForceDeltaThreshold;
+
+  /// Minimum number of shakes required to trigger callback
   final int minimumShakeCount;
 
-  /// Time window for counting shakes (in milliseconds)
+  /// Time window for counting shakes (in milliseconds, typically 800ms)
   final int shakeWindowMs;
 
   /// Cooldown period after successful detection (in seconds)
+  /// Lower value = more responsive, higher value = fewer false positives
   final int cooldownSeconds;
 
   // Private state
@@ -37,29 +42,52 @@ class ShakeService {
 
   ShakeService({
     required this.onShakeDetected,
-    this.shakeThreshold = 2.9,
-    this.minimumShakeCount = 2,
-    this.shakeWindowMs = 750,
-    this.cooldownSeconds = 3,
+    this.shakeThreshold = 2.4, // Optimal: ~2.4 gForce for normal shake
+    this.gForceDeltaThreshold = 0.7, // Optimal: 0.5-1.0 for delta detection
+    this.minimumShakeCount = 2, // Number of shakes to detect
+    this.shakeWindowMs = 800, // Optimal: ~800ms time window
+    this.cooldownSeconds = 1, // Optimal: ~1 second cooldown
   }) {
     assert(
-      shakeThreshold >= 2.8 && shakeThreshold <= 3.0,
-      'Shake threshold must be between 2.8 and 3.0',
+      shakeThreshold >= 1.5 && shakeThreshold <= 3.5,
+      'Shake threshold must be between 1.5 and 3.5 gForce',
     );
-    assert(minimumShakeCount >= 2, 'Minimum shake count must be at least 2');
     assert(
-      shakeWindowMs >= 700 && shakeWindowMs <= 800,
-      'Shake window must be between 700-800ms',
+      gForceDeltaThreshold >= 0.3 && gForceDeltaThreshold <= 2.0,
+      'gForce delta threshold must be between 0.3 and 2.0',
+    );
+    assert(minimumShakeCount >= 1, 'Minimum shake count must be at least 1');
+    assert(
+      shakeWindowMs >= 500 && shakeWindowMs <= 1000,
+      'Shake window must be between 500-1000ms',
+    );
+    assert(
+      cooldownSeconds >= 0 && cooldownSeconds <= 5,
+      'Cooldown must be between 0-5 seconds',
     );
   }
 
   /// Start listening to accelerometer events
   void startListening() {
     _lastShakeTime = DateTime.now();
-    _accelerometerSubscription = accelerometerEventStream(
-      samplingPeriod: SensorInterval.uiInterval,
-    ).listen(_handleAccelerometerEvent);
+    _accelerometerSubscription =
+        accelerometerEventStream(
+          samplingPeriod: SensorInterval.uiInterval,
+        ).listen(
+          _handleAccelerometerEvent,
+          onError: (e) {
+            print('❌ ShakeService: Accelerometer error - $e');
+          },
+        );
     print('🔔 ShakeService: Started listening for shake gestures');
+    print(
+      '🔔 ShakeService Configuration:'
+      '\n  • gForce Threshold: $shakeThreshold'
+      '\n  • gForce Delta Threshold: $gForceDeltaThreshold'
+      '\n  • Minimum Shakes: $minimumShakeCount'
+      '\n  • Time Window: ${shakeWindowMs}ms'
+      '\n  • Cooldown: ${cooldownSeconds}s',
+    );
   }
 
   /// Stop listening to accelerometer events
@@ -85,14 +113,16 @@ class ShakeService {
     // Detect significant change in gForce (deliberate shake)
     final gForceDelta = (gForce - _lastGForce).abs();
 
-    // Debug: Print gForce values periodically
+    // Debug: Print gForce values periodically (every second)
     if (DateTime.now().millisecondsSinceEpoch % 1000 < 100) {
       print(
-        '📊 Current gForce: ${gForce.toStringAsFixed(2)}, Delta: ${gForceDelta.toStringAsFixed(2)}, Threshold: $shakeThreshold',
+        '📊 gForce: ${gForce.toStringAsFixed(2)} | Delta: ${gForceDelta.toStringAsFixed(2)} | Thresholds: gF=$shakeThreshold, Δ=$gForceDeltaThreshold | Count: $_shakeCount/$minimumShakeCount',
       );
     }
 
-    if (gForceDelta > shakeThreshold) {
+    // Check both gForce absolute value AND the delta for more reliable detection
+    // This prevents false positives from slow movements
+    if (gForce > shakeThreshold && gForceDelta > gForceDeltaThreshold) {
       // Reset shake count if time window expired
       if (_firstShakeTime == null ||
           now.difference(_firstShakeTime!).inMilliseconds > shakeWindowMs) {
@@ -103,7 +133,7 @@ class ShakeService {
 
       _shakeCount++;
       print(
-        '🔔 ShakeService: Shake detected ($_shakeCount/$minimumShakeCount) - gForce: ${gForce.toStringAsFixed(2)}',
+        '🔔 ShakeService: Shake detected ($_shakeCount/$minimumShakeCount) - gForce: ${gForce.toStringAsFixed(2)}, Delta: ${gForceDelta.toStringAsFixed(2)}',
       );
 
       // Trigger callback if minimum shake count reached

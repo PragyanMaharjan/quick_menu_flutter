@@ -6,8 +6,10 @@ abstract class IOrderRepository {
   /// Submit an order - saves locally first, syncs to API if online
   Future<Either<Failure, OrderHiveModel>> submitOrder(
     List<Map<String, dynamic>> items,
-    double totalAmount,
-  );
+    double totalAmount, {
+    String? tableId,
+    String? orderType,
+  });
 
   /// Get order history - tries API first, falls back to local
   Future<Either<Failure, List<OrderHiveModel>>> getOrderHistory();

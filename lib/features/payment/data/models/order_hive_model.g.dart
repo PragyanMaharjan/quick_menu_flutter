@@ -25,13 +25,15 @@ class OrderHiveModelAdapter extends TypeAdapter<OrderHiveModel> {
       status: fields[3] as String,
       orderDate: fields[4] as DateTime,
       isSynced: fields[5] as bool,
+      tableId: fields[6] as String?,
+      orderType: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, OrderHiveModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.orderId)
       ..writeByte(1)
@@ -43,7 +45,11 @@ class OrderHiveModelAdapter extends TypeAdapter<OrderHiveModel> {
       ..writeByte(4)
       ..write(obj.orderDate)
       ..writeByte(5)
-      ..write(obj.isSynced);
+      ..write(obj.isSynced)
+      ..writeByte(6)
+      ..write(obj.tableId)
+      ..writeByte(7)
+      ..write(obj.orderType);
   }
 
   @override

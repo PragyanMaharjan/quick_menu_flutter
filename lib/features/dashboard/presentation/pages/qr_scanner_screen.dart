@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:quick_menu/core/providers/table_provider.dart';
 
-class QrScannerScreen extends StatefulWidget {
+class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
 
   @override
-  State<QrScannerScreen> createState() => _QrScannerScreenState();
+  ConsumerState<QrScannerScreen> createState() => _QrScannerScreenState();
 }
 
-class _QrScannerScreenState extends State<QrScannerScreen> {
+class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
   MobileScannerController controller = MobileScannerController();
   bool _isScanning = false;
 
@@ -86,18 +88,24 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   }
 
   String? _extractTableNumber(String qrValue) {
+    // Check if it's just a plain number (e.g., "5")
+    final plainNumberRegex = RegExp(r'^\d+$');
+    if (plainNumberRegex.hasMatch(qrValue.trim())) {
+      return qrValue.trim();
+    }
+
     // Assuming QR code contains something like "table5" or "Table: 5"
     final tableRegex = RegExp(r'table(\d+)', caseSensitive: false);
     final match = tableRegex.firstMatch(qrValue);
     if (match != null) {
-      return 'Table ${match.group(1)}';
+      return match.group(1)!;
     }
 
     // Try another format: "Table: 5"
     final tableColonRegex = RegExp(r'Table:\s*(\d+)', caseSensitive: false);
     final colonMatch = tableColonRegex.firstMatch(qrValue);
     if (colonMatch != null) {
-      return 'Table ${colonMatch.group(1)}';
+      return colonMatch.group(1)!;
     }
 
     return null;
@@ -107,32 +115,29 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     // Stop scanning
     controller.stop();
 
-    // Show confirmation dialog
+    // Store table number in provider
+    ref.read(tableIdProvider.notifier).state = tableNumber;
+
+    // Show welcome dialog
     showDialog(
       context: context,
       barrierDismissible: false, // Prevent dismissing by tapping outside
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Table'),
-        content: Text('Are you in $tableNumber?'),
+        title: const Text('Welcome!'),
+        content: Text(
+          'Please be seated at Table $tableNumber until the waiter arrives.',
+          style: const TextStyle(fontSize: 16),
+        ),
         actions: [
           TextButton(
             onPressed: () {
-              // No - close dialog and restart scanning
-              Navigator.of(context).pop(); // Close dialog
-              controller.start(); // Restart scanning
-              setState(() => _isScanning = true);
-            },
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () {
-              // Yes - close dialog and navigate to dashboard
+              // Close dialog and go back to dashboard
               Navigator.of(context).pop(); // Close dialog
               Navigator.of(
                 context,
               ).pop(tableNumber); // Go back to dashboard with table info
             },
-            child: const Text('Yes'),
+            child: const Text('OK'),
           ),
         ],
       ),

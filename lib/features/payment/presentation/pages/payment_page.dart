@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quick_menu/core/providers/cart_provider.dart';
+import 'package:quick_menu/core/providers/order_type_provider.dart';
+import 'package:quick_menu/core/providers/table_provider.dart';
 import 'package:quick_menu/features/payment/data/repositories/order_repository_impl.dart';
 
 class PaymentPage extends ConsumerStatefulWidget {
@@ -308,9 +310,13 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
 
       // Submit order using offline-first repository
       final orderRepository = ref.read(orderRepositoryProvider);
+      final tableId = ref.read(tableIdProvider);
+      final orderType = ref.read(orderTypeProvider);
       final result = await orderRepository.submitOrder(
         orderItems,
         widget.order.totalAmount,
+        tableId: tableId,
+        orderType: orderType?.displayName,
       );
 
       await result.fold(
@@ -338,12 +344,23 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       // Clear cart after successful order
       _clearCart();
 
-      // Navigate to thank you page
+      // Check if table is not set and ask for order type
       if (mounted) {
-        Future.delayed(const Duration(seconds: 1), () {
+        Future.delayed(const Duration(seconds: 1), () async {
           if (mounted) {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/thank-you', arguments: widget.order);
+            final tableId = ref.read(tableIdProvider);
+            if (tableId == null) {
+              // Show order type dialog
+              await _showOrderTypeDialog();
+            }
+            if (mounted) {
+              Navigator.pop(context);
+              Navigator.pushNamed(
+                context,
+                '/thank-you',
+                arguments: widget.order,
+              );
+            }
           }
         });
       }
@@ -471,9 +488,13 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       }).toList();
 
       final orderRepository = ref.read(orderRepositoryProvider);
+      final tableId = ref.read(tableIdProvider);
+      final orderType = ref.read(orderTypeProvider);
       final result = await orderRepository.submitOrder(
         orderItems,
         widget.order.totalAmount,
+        tableId: tableId,
+        orderType: orderType?.displayName,
       );
 
       await result.fold(
@@ -495,10 +516,21 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       _clearCart();
 
       if (mounted) {
-        Future.delayed(const Duration(seconds: 1), () {
+        Future.delayed(const Duration(seconds: 1), () async {
           if (mounted) {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/thank-you', arguments: widget.order);
+            final tableId = ref.read(tableIdProvider);
+            if (tableId == null) {
+              // Show order type dialog
+              await _showOrderTypeDialog();
+            }
+            if (mounted) {
+              Navigator.pop(context);
+              Navigator.pushNamed(
+                context,
+                '/thank-you',
+                arguments: widget.order,
+              );
+            }
           }
         });
       }
@@ -514,6 +546,200 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
         setState(() => isProcessing = false);
       }
     }
+  }
+
+  Future<void> _showOrderTypeDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must select an option
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Select Order Type',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'How would you like to receive your order?',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+              // Dine-In Option
+              _buildOrderTypeButton(
+                context: context,
+                orderType: OrderType.dineIn,
+                title: 'Dine-In',
+                subtitle: 'Eat at restaurant',
+                icon: Icons.restaurant,
+                color: const Color(0xFFE05757),
+              ),
+              const SizedBox(height: 12),
+              // Takeaway Option
+              _buildOrderTypeButton(
+                context: context,
+                orderType: OrderType.takeaway,
+                title: 'Takeaway',
+                subtitle: 'Pick up yourself',
+                icon: Icons.shopping_bag,
+                color: const Color(0xFFF7971E),
+              ),
+              const SizedBox(height: 12),
+              // Delivery Option
+              _buildOrderTypeButton(
+                context: context,
+                orderType: OrderType.delivery,
+                title: 'Delivery',
+                subtitle: 'Deliver to address',
+                icon: Icons.delivery_dining,
+                color: Colors.blue,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOrderTypeButton({
+    required BuildContext context,
+    required OrderType orderType,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+  }) {
+    return InkWell(
+      onTap: () {
+        ref.read(orderTypeProvider.notifier).state = orderType;
+
+        // If dine-in is selected, ask for table number
+        if (orderType == OrderType.dineIn) {
+          Navigator.pop(context);
+          _showTableNumberDialog();
+        } else {
+          Navigator.pop(context);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.5), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTableNumberDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.table_restaurant, color: Color(0xFFE05757)),
+              SizedBox(width: 8),
+              Text('Enter Table Number'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Please enter your table number:',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Table Number',
+                  hintText: 'e.g., 5',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: const Icon(Icons.numbers),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE05757),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                final tableNumber = controller.text.trim();
+                if (tableNumber.isNotEmpty) {
+                  ref.read(tableIdProvider.notifier).state = tableNumber;
+                  Navigator.pop(context);
+                } else {
+                  SnackBarUtils.showSnackBar(
+                    context,
+                    'Please enter a valid table number',
+                  );
+                }
+              },
+              child: const Text(
+                'Confirm',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _clearCart() {

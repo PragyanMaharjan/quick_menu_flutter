@@ -12,6 +12,8 @@ enum AuthStatus {
 }
 
 class AuthState extends Equatable {
+  static const Object _unset = Object();
+
   final AuthStatus status;
   final AuthEntity? user;
   final String? errorMessage;
@@ -24,13 +26,14 @@ class AuthState extends Equatable {
 
   AuthState copyWith({
     AuthStatus? status,
-    AuthEntity? user,
-    String? errorMessage,
+    Object? user = _unset,
+    Object? errorMessage = _unset,
   }) {
     return AuthState(
       status: status ?? this.status,
-      user: user ?? this.user,
-      errorMessage: errorMessage ?? this.errorMessage,
+      user: user == _unset ? this.user : user as AuthEntity?,
+      errorMessage:
+          errorMessage == _unset ? this.errorMessage : errorMessage as String?,
     );
   }
 

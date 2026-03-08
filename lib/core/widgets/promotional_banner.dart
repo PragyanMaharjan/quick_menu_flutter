@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:async';
 
 /// Animated promotional banner widget for the home screen
 class PromotionalBanner extends StatefulWidget {
@@ -14,6 +15,7 @@ class _PromotionalBannerState extends State<PromotionalBanner>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rotationAnimation;
+  Timer? _bannerRotationTimer;
   int _currentBannerIndex = 0;
 
   final List<BannerData> _banners = [
@@ -53,8 +55,13 @@ class _PromotionalBannerState extends State<PromotionalBanner>
       end: 0.02,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    // Auto-rotate banners
-    Future.delayed(const Duration(seconds: 4), _rotateBanner);
+    // Auto-rotate banners with a cancellable timer.
+    _scheduleBannerRotation();
+  }
+
+  void _scheduleBannerRotation() {
+    _bannerRotationTimer?.cancel();
+    _bannerRotationTimer = Timer(const Duration(seconds: 4), _rotateBanner);
   }
 
   void _rotateBanner() {
@@ -62,12 +69,13 @@ class _PromotionalBannerState extends State<PromotionalBanner>
       setState(() {
         _currentBannerIndex = (_currentBannerIndex + 1) % _banners.length;
       });
-      Future.delayed(const Duration(seconds: 4), _rotateBanner);
+      _scheduleBannerRotation();
     }
   }
 
   @override
   void dispose() {
+    _bannerRotationTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

@@ -1,5 +1,5 @@
 
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider to manage the current table ID after QR code scanning
 /// This stores the table ID extracted from the QR code and persists it

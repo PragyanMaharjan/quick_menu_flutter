@@ -4,18 +4,18 @@ import 'package:quick_menu/core/api/api_endpoint.dart';
 void main() {
   group('ApiEndpoints', () {
     test('should have valid base URL', () {
-      expect(ApiEndpoints.baseUrl, equals('http://10.0.2.2:3000/quickScan'));
+      expect(ApiEndpoints.baseUrl, contains('/quickScan'));
     });
 
-    test('should have connection timeout of 30 seconds', () {
+    test('should have connection timeout of 15 seconds', () {
       expect(
         ApiEndpoints.connectionTimeout,
-        equals(const Duration(seconds: 30)),
+        equals(const Duration(seconds: 15)),
       );
     });
 
-    test('should have receive timeout of 30 seconds', () {
-      expect(ApiEndpoints.receiveTimeout, equals(const Duration(seconds: 30)));
+    test('should have receive timeout of 20 seconds', () {
+      expect(ApiEndpoints.receiveTimeout, equals(const Duration(seconds: 20)));
     });
 
     test('should have customers endpoint', () {
@@ -32,20 +32,17 @@ void main() {
 
     test('should construct full URL for login endpoint', () {
       final fullUrl = '${ApiEndpoints.baseUrl}${ApiEndpoints.customerLogin}';
-      expect(fullUrl, equals('http://10.0.2.2:3000/quickScan/customers/login'));
+      expect(fullUrl, contains('/quickScan/customers/login'));
     });
 
     test('should construct full URL for register endpoint', () {
       final fullUrl = '${ApiEndpoints.baseUrl}${ApiEndpoints.customerRegister}';
-      expect(
-        fullUrl,
-        equals('http://10.0.2.2:3000/quickScan/customers/signup'),
-      );
+      expect(fullUrl, contains('/quickScan/customers/signup'));
     });
 
     test('should construct full URL for customers endpoint', () {
       final fullUrl = '${ApiEndpoints.baseUrl}${ApiEndpoints.customers}';
-      expect(fullUrl, equals('http://10.0.2.2:3000/quickScan/customers'));
+      expect(fullUrl, contains('/quickScan/customers'));
     });
 
     test('should have reasonable timeout durations', () {

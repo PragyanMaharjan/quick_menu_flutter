@@ -35,8 +35,10 @@ class OrderRepository implements IOrderRepository {
   @override
   Future<Either<Failure, OrderHiveModel>> submitOrder(
     List<Map<String, dynamic>> items,
-    double totalAmount,
-  ) async {
+    double totalAmount, {
+    String? tableId,
+    String? orderType,
+  }) async {
     final orderId = DateTime.now().millisecondsSinceEpoch.toString();
     final order = OrderHiveModel(
       orderId: orderId,
@@ -45,6 +47,8 @@ class OrderRepository implements IOrderRepository {
       status: 'pending',
       orderDate: DateTime.now(),
       isSynced: false,
+      tableId: tableId,
+      orderType: orderType,
     );
 
     // Always save locally first

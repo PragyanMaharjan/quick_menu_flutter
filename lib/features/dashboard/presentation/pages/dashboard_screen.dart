@@ -29,51 +29,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Initialize shake detection service
   void _initializeShakeService() {
-    print('🔔 Initializing ShakeService...');
+    print('🔔 Initializing ShakeService with optimal thresholds...');
     _shakeService = ShakeService(
       onShakeDetected: _showCallWaiterDialog,
-      shakeThreshold: 2.9,
-      minimumShakeCount: 2,
-      shakeWindowMs: 750,
-      cooldownSeconds: 3,
+      shakeThreshold: 2.4, // Optimal: ~2.4 gForce for normal shakes
+      gForceDeltaThreshold: 0.7, // Optimal: ~0.7 for delta detection
+      minimumShakeCount: 2, // Number of shakes to detect
+      shakeWindowMs: 800, // Optimal: ~800ms time window
+      cooldownSeconds: 1, // Optimal: ~1 second cooldown
     );
     _shakeService?.startListening();
-    print('✅ ShakeService initialized and listening');
+    print('✅ ShakeService initialized with optimal settings');
   }
 
   /// Show call waiter dialog when shake is detected
   void _showCallWaiterDialog() {
-    print('📱 Showing call waiter dialog...');
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: const [
-              Icon(Icons.notifications_active, color: Color(0xFFE05757)),
-              SizedBox(width: 8),
-              Text('Call Waiter'),
-            ],
-          ),
-          content: const Text(
-            'A waiter has been notified and will be with you shortly.',
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                print('✅ Dialog dismissed');
-              },
-              child: const Text(
-                'OK',
-                style: TextStyle(color: Color(0xFFE05757), fontSize: 16),
-              ),
+    print('📱 Shake detected! Attempting to show dialog...');
+
+    // Check if widget is still mounted
+    if (!mounted) {
+      print('❌ Widget not mounted, cannot show dialog');
+      return;
+    }
+
+    // Use WidgetsBinding to ensure dialog shows properly
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      print('📱 Showing call waiter dialog...');
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Row(
+              children: const [
+                Icon(Icons.notifications_active, color: Color(0xFFE05757)),
+                SizedBox(width: 8),
+                Text('Call Waiter'),
+              ],
             ),
-          ],
-        );
-      },
-    );
+            content: const Text(
+              'A waiter has been notified and will be with you shortly.',
+              style: TextStyle(fontSize: 16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  print('✅ Dialog dismissed');
+                },
+                child: const Text(
+                  'OK',
+                  style: TextStyle(color: Color(0xFFE05757), fontSize: 16),
+                ),
+              ),
+            ],
+          );
+        },
+      ).catchError((e) {
+        print('❌ Error showing dialog: $e');
+      });
+    });
   }
 
   void _onItemTapped(int index) {

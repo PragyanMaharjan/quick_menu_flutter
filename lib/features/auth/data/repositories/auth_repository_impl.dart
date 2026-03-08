@@ -65,11 +65,11 @@ class AuthRepository implements IAuthRepository {
         }
         return const Left(ApiFailure(message: "Invalid email or password"));
       } on DioException catch (e) {
-        print('❌ [REPO] DioException during upload: ${e.message}');
+        print('❌ [REPO] DioException during login: ${e.message}');
         print('❌ [REPO] Status code: ${e.response?.statusCode}');
         print('❌ [REPO] Response data: ${e.response?.data}');
 
-        String errorMessage = 'Photo upload failed: ${e.message}';
+        String errorMessage = 'Login failed: ${e.message}';
         if (e.response?.data is Map<String, dynamic>) {
           final responseData = e.response!.data as Map<String, dynamic>;
           errorMessage = responseData['message'] ?? errorMessage;
@@ -82,7 +82,7 @@ class AuthRepository implements IAuthRepository {
         );
       } catch (e) {
         print('❌ [REPO] General exception: ${e.toString()}');
-        return Left(ApiFailure(message: 'Photo upload error: ${e.toString()}'));
+        return Left(ApiFailure(message: 'Login error: ${e.toString()}'));
       }
     } else {
       try {

@@ -1,4 +1,3 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quick_menu/features/auth/domain/usecases/get_current_usecase.dart';
 import 'package:quick_menu/features/auth/domain/usecases/login_usecase.dart';
@@ -54,8 +53,10 @@ class AuthViewModel extends Notifier<AuthState> {
   Future<void> login({required String email, required String password}) async {
     state = state.copyWith(status: AuthStatus.loading);
 
+    final normalizedEmail = email.trim().toLowerCase();
+
     final result = await _loginUsecase(
-      LoginParams(email: email, password: password),
+      LoginParams(email: normalizedEmail, password: password),
     );
 
     result.fold(

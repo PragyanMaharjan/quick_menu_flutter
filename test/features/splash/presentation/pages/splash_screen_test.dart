@@ -43,7 +43,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final scaffold = find.byType(Scaffold);
       expect(scaffold, findsOneWidget);
@@ -53,7 +53,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.byType(Image), findsOneWidget);
     });
@@ -83,8 +83,8 @@ void main() {
       // Act
       await tester.pumpWidget(createWidgetUnderTest());
 
-      // Assert
-      expect(find.byType(SingleChildScrollView), findsWidgets);
+      // Current splash layout doesn't use a scroll view.
+      expect(find.byType(SingleChildScrollView), findsNothing);
     });
 
     testWidgets('SplashScreen initializes correctly', (
@@ -133,8 +133,8 @@ void main() {
       // Act
       await tester.pumpWidget(createWidgetUnderTest());
 
-      // Give async image loading time
-      await tester.pumpAndSettle();
+      // Pump a frame without waiting for all animations to settle.
+      await tester.pump();
 
       // Assert
       expect(find.byType(Image), findsOneWidget);

@@ -2,6 +2,7 @@
 ///
 /// This file demonstrates how to use ShakeService in any Flutter widget.
 /// Production-ready implementation for restaurant mobile app.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:quick_menu/core/services/shake_service.dart';

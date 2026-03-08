@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quick_menu/core/services/hive/hive_service.dart';
 import 'package:quick_menu/features/auth/presentation/pages/login_screen.dart';
 import 'package:quick_menu/core/services/storage/user_session_service.dart';
 import 'package:hive/hive.dart';
@@ -25,6 +26,9 @@ void main() {
       if (!Hive.isAdapterRegistered(AuthHiveModelAdapter().typeId)) {
         Hive.registerAdapter(AuthHiveModelAdapter());
       }
+
+      // Satisfy hiveServiceProvider dependency used by authViewModelProvider.
+      setHiveServiceInstance(HiveService());
     });
 
     tearDown(() async {
